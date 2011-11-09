@@ -1,7 +1,6 @@
 /*
  * 该程序为实现C语言的向量有关函数的定义
  */
-#include "cgi_comm.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
@@ -342,7 +341,6 @@ int vect_strcmp(const vector vector1,const vector vector2)
 		return -1;
 	if(vect_getlength(vector1) !=vect_getlength(vector2))	//保存的字符串个数不一致 肯定不相等
 		return 1;	
-int i;
 	//拷贝副本
 	vector_temp1=vect_copy(vector1);
 	if(!vector_temp1)
@@ -351,11 +349,7 @@ int i;
 	if(!vector_temp2)
 		return -1;
 	vect_sortstr(vector_temp1);
-	for(i=0;i<vect_getlength(vector_temp1);i++)
-		error_log("[%s]",vect_getstrelmat(vector_temp1,i));
 	vect_sortstr(vector_temp2);
-	for(i=0;i<vect_getlength(vector_temp2);i++)
-		error_log("[%s]",vect_getstrelmat(vector_temp2,i));
 
 	ret = vect_strcmp_order(vector_temp1, vector_temp2);
 	vect_free(vector_temp1);
@@ -377,10 +371,7 @@ int vect_strcmp_order(const vector vector1,const vector vector2)
 	for(i=0;i<vect_getlength(vector1);i++)
 	{
 		if(strcmp(vect_getstrelmat(vector1,i),vect_getstrelmat(vector2,i)) !=0)
-		{
-			error_log("[%d][%s]-[%s]", i, vect_getstrelmat(vector1,i), vect_getstrelmat(vector2,i));
 			return 1;
-		}
 	}
 	return 0;
 }
