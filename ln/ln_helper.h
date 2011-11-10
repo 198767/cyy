@@ -36,7 +36,7 @@ void ln_free(ln* n);
  * 	成功:返回n
  * 	失败:返回NULL
  */
-ln ln_checknull(ln n);
+int ln_checknull(ln n);
 
 /*
  * 作用:查看ln的内存结构
@@ -96,4 +96,35 @@ int ln_untilcellnum(ln n,cell q);
  */
 ln ln_copy(ln a,ln b);
 
+
+/*
+ * 作用:检查str的格式是否为(+-)?\d+(.\d+)? 该格式的数字可以用ln表示
+ * 参数:
+ *	str:要检查的字符串
+ * 返回值:
+ * 	成功:0
+ * 	失败:-1
+ */
+int ln_checkstr(const char* str);
+
+/*
+ * 作用:把字符串转换为ln
+ * 参数:
+ *	n:要赋值的ln,如果为NULL则构造一个新ln
+ *	str:要转换的字符串
+ * 返回值:
+ * 	成功:返回ln
+ * 	失败:NULL
+ */
+ln str2ln(ln n,const char* str);
+
+/*
+ * 作用:把ln转换为字符串
+ * 参数:
+ *	n:要处理的ln
+ * 返回值:
+ * 	成功:返回ln的字符串表示(需要用free释放)
+ * 	失败:NULL
+ */
+char* ln2str(ln n);
 #endif

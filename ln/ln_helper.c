@@ -15,13 +15,13 @@
 ln ln_creat(int cellnum) 
 {
 	extern int errno;
-	int i,j;
+	int i;
 	cell p;
 
 	ln n=(ln)malloc(sizeof(struct _ln));
 	if(!n)
 	{
-		fprintf(stderr,"[%s %d] ln_creat malloc error,reason: %s\n",__FILE__,__LINE__,strerror(errno));
+		fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
 		return NULL;			
 	}
 
@@ -35,7 +35,7 @@ ln ln_creat(int cellnum)
 		p=(cell)malloc(sizeof(struct _cell));
 		if(!p)
 		{
-			fprintf(stderr,"[%s %d] ln_creat malloc error,reason: %s\n",__FILE__,__LINE__,strerror(errno));
+			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
 			ln_free(&n);
 			return NULL;			
 		}
@@ -71,13 +71,13 @@ void ln_free(ln* n)
 	cell p;
 	if(n==NULL)
 	{
-		fprintf(stderr,"[%s %d] ln_free error,reason: n=NULL\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason: n=NULL\n",__FILE__,__LINE__,__FUNCTION__);
 		return;	
 	}
 
-	if(ln_checknull(*n)==NULL)
+	if(ln_checknull(*n)!=0)
 	{
-		fprintf(stderr,"[%s %d] ln_free error,reason: ln_checknull fail\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return;	
 	}
 
@@ -103,35 +103,35 @@ void ln_free(ln* n)
  * 参数:
  *	n:要检查的ln
  * 返回值:
- * 	成功:返回n
- * 	失败:返回NULL
+ * 	成功:返回0
+ * 	失败:返回-1
  */
-ln ln_checknull(ln n)
+int ln_checknull(ln n)
 {
 	if(n==NULL) //空指针
 	{
-		fprintf(stderr,"[%s %d] ln_checknull error,reason:n=NULL\n",__FILE__,__LINE__);
-		return NULL;	
+		fprintf(stderr,"[%s %d] %s error,reason:n=NULL\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;	
 	}
 
 	if(n->sign !=0 && n->sign !=1) //非法符号
 	{
-		fprintf(stderr,"[%s %d] ln_checknull error,reason:invalid sign\n",__FILE__,__LINE__);
-		return NULL;	
+		fprintf(stderr,"[%s %d] %s error,reason:invalid sign\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;	
 	}
 
 	if(n->msd==NULL)
 	{
-		fprintf(stderr,"[%s %d] ln_checknull error,reason:n->msd=NULL\n",__FILE__,__LINE__);
-		return NULL;	
+		fprintf(stderr,"[%s %d] %s error,reason:n->msd=NULL\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;	
 	}
 
 	if(n->lsd==NULL)
 	{
-		fprintf(stderr,"[%s %d] ln_checknull error,reason:n->lsd=NULL\n",__FILE__,__LINE__);
-		return NULL;	
+		fprintf(stderr,"[%s %d] %s error,reason:n->lsd=NULL\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;	
 	}
-	return n;
+	return 0;
 }
 
 
@@ -145,9 +145,9 @@ ln ln_checknull(ln n)
 void ln_info(ln n)
 {
 	cell p=n->lsd;
-	if(ln_checknull(n)==NULL)
+	if(ln_checknull(n) !=0)
 	{
-		fprintf(stderr,"[%s %d] ln_info error,reason:ln_checknull fail\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason:ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return;	
 	}
 	printf("ln_addr=%d sign=%d \n",(int)n,n->sign);
@@ -183,7 +183,7 @@ ln ln_setval(ln n,int new_value)
 		n=ln_creat(INIT_SIZE);
 		if(!n)
 		{
-			fprintf(stderr,"[%s %d] ln_setval error,reason:ln_creat fail\n",__FILE__,__LINE__);
+			fprintf(stderr,"[%s %d] %s error,reason:ln_creat fail\n",__FILE__,__LINE__,__FUNCTION__);
 			return NULL;
 		}
 	}
@@ -206,7 +206,7 @@ ln ln_setval(ln n,int new_value)
 			{
 				if(ln_addcell(n,INIT_SIZE)==NULL)
 				{
-					fprintf(stderr,"[%s %d] ln_setval error,reason:ln_addcell fail\n",__FILE__,__LINE__);
+					fprintf(stderr,"[%s %d] %s error,reason:ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
 					return NULL;
 				}
 			}
@@ -235,14 +235,14 @@ ln ln_addcell(ln n,int inc_num)
 	cell p;
 
 	//验证参数
-	if(ln_checknull(n)==NULL)
+	if(ln_checknull(n) !=0)
 	{
-		fprintf(stderr,"[%s %d] ln_addcell error,reason:ln_checknull fail\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason:ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
 	if(inc_num<=0) //无须增加,非法参数
 	{
-		fprintf(stderr,"[%s %d] ln_addcell error,reason:inc_num<=0\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason:inc_num<=0\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
 
@@ -278,9 +278,9 @@ int ln_untilcellnum(ln n,cell q)
 {
 	int i=1;
 	cell p=n->lsd;
-	if(ln_checknull(n)==NULL)
+	if(ln_checknull(n) !=0)
 	{
-		fprintf(stderr,"[%s %d] ln_cellnum error,reason: ln_checknull fail\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return -1;	
 	}
 	while(p!=q)
@@ -288,14 +288,13 @@ int ln_untilcellnum(ln n,cell q)
 		p=p->hcell;
 		if(p==n->lsd) //指定的节点在n中不存在 导致又碰到lsd了
 		{
-			fprintf(stderr,"[%s %d] ln_cellnum error,reason: invalid cell\n",__FILE__,__LINE__);
+			fprintf(stderr,"[%s %d] %s error,reason: invalid cell\n",__FILE__,__LINE__,__FUNCTION__);
 			return -1;
 		}
 		i++;
 	}
 	return i;
 }
-
 
 /*
  * 作用:复制b的值给a
@@ -313,16 +312,16 @@ ln ln_copy(ln a,ln b)
 	int cellnum_b;
 
 	//验证b
-	if(ln_checknull(b)==NULL)
+	if(ln_checknull(b) !=0)
 	{
-		fprintf(stderr,"[%s %d] ln_copy error,reason: ln_checknull fail\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
 
 	cellnum_b=ln_cellnum(b); //获取b的有效节点
 	if(cellnum_b==-1)
 	{
-		fprintf(stderr,"[%s %d] ln_copy error,reason: ln_cellnum fail\n",__FILE__,__LINE__);
+		fprintf(stderr,"[%s %d] %s error,reason: ln_cellnum fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
 
@@ -331,22 +330,22 @@ ln ln_copy(ln a,ln b)
 		a=ln_creat(cellnum_b);  //初始创建和b一样的有效节点数 省得再分配
 		if(a==NULL)
 		{
-			fprintf(stderr,"[%s %d] ln_copy error,reason: ln_creat fail\n",__FILE__,__LINE__);
+			fprintf(stderr,"[%s %d] %s error,reason: ln_creat fail\n",__FILE__,__LINE__,__FUNCTION__);
 			return NULL;
 		}
 	}
 	else
 	{
-		if(ln_checknull(a)==NULL)
+		if(ln_checknull(a) !=0)
 		{
-			fprintf(stderr,"[%s %d] ln_copy error,reason: ln_checknull fail\n",__FILE__,__LINE__);
+			fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 			return NULL;
 		}
 
 		cellnum_a=ln_cellnum(a);
 		if(cellnum_a==-1)
 		{
-			fprintf(stderr,"[%s %d] ln_copy error,reason: ln_cellnum fail\n",__FILE__,__LINE__);
+			fprintf(stderr,"[%s %d] %s error,reason: ln_cellnum fail\n",__FILE__,__LINE__,__FUNCTION__);
 			return NULL;
 		}
 
@@ -354,7 +353,7 @@ ln ln_copy(ln a,ln b)
 		{
 			if(ln_addcell(a,cellnum_b-cellnum_a)==NULL) //把a的长度设置成和b一样
 			{
-				fprintf(stderr,"[%s %d] ln_copy error,reason: ln_addsize fail\n",__FILE__,__LINE__);
+				fprintf(stderr,"[%s %d] %s error,reason: ln_addsize fail\n",__FILE__,__LINE__,__FUNCTION__);
 				return NULL;
 			}
 		}
@@ -373,102 +372,203 @@ ln ln_copy(ln a,ln b)
 	a->msd=p->lcell;
 	return a;
 }
-#ifdef cyy
-//用字符串构造ln str格式为 (+-)?\d+(.\d+)?
+
+/*
+ * 作用:检查str的格式是否为(+-)?\d+(.\d+)? 该格式的数字可以用ln表示
+ * 参数:
+ *	str:要检查的字符串
+ * 返回值:
+ * 	成功:0
+ * 	失败:-1
+ */
+int ln_checkstr(const char* str)
+{
+	int haspoint=0;	//0-无小数点 1-有小数点
+
+	if(str==NULL)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: str=NULL",__FILE__,__LINE__,__FUNCTION__);
+		return -1;
+
+	}
+	//以合法字符开头
+	if(*str!='+' && *str!='-' && (*str<'0' || *str>'9'))
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: invalid first char (%c)\n",__FILE__,__LINE__,__FUNCTION__,*str);
+		return -1;
+	}
+	str++;
+	while(*str)
+	{
+		if(*str !='.' && (*str<'0' || *str>'9'))
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: invalid char (%c)\n",__FILE__,__LINE__,__FUNCTION__,*str);
+			return -1;
+		}
+		if(*str=='.')
+		{
+			if(haspoint==0)
+				haspoint=1;
+			else //已经有了
+			{
+				fprintf(stderr,"[%s %d] %s error,reason: mutiple points\n",__FILE__,__LINE__,__FUNCTION__);
+				return -1;
+			}
+		}
+		str++;
+	}
+	if(haspoint==1)
+	{
+		if(str[-1]<'0' || str[-1]>'9')
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: point is the last char\n",__FILE__,__LINE__,__FUNCTION__);
+			return -1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * 作用:把ln的前置0去掉,不影响ln的数值,只是方便一些操作
+ * 参数:
+ *	n:要处理的ln
+ * 返回值:
+ * 	无
+ */
+void ln_stripleadingzero(ln n)
+{
+	cell p;
+	if(ln_checknull(n)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return;
+	}
+
+	p=n->msd;
+	while(p->num==0 && p != n->lsd)
+		p=p->lcell;
+	n->msd=p;
+	return;
+}
+
+/*
+ * 作用:把字符串转换为ln
+ * 参数:
+ *	n:要赋值的ln,如果为NULL则构造一个新ln
+ *	str:要转换的字符串
+ * 返回值:
+ * 	成功:返回ln
+ * 	失败:NULL
+ */
 ln str2ln(ln n,const char* str)
 {
 	int i;
-	int point=0; //point 小數点数量 验证格式用
-	const char *sp,*sp2; //sp 遍历完后指向最后一个数字 sp2 小数点所在位置
+	const char *lastdigit,*point;
 	cell p;
 
-	//str格式验证
-	assert(*str=='+' || *str=='-' || (ISDIGIT(*str))); //以合法字符开头
-	sp=str+1;
-	while(*sp)
-	{
-		assert(ISDIGIT(*sp) || *sp=='.');
-		if(*sp=='.')
-		{
-			point++;	
-			sp2=sp;	
-		}
-		sp++;
-	}
-	sp--;
-	assert(point<=1);
-	assert(*sp !='.');
-	
 	//创建一个ln
-	if(!n)
-		n=ln_creat(INIT_SIZE);
-	n->sign=(*str=='-')?0:1; //设置符号
-	
-	//清除前置的0
-	if(*str=='+' || *str=='-')
-		str++;
-	while(str != sp && *str=='0')
-		str++;
-	if(*str=='.')
-		str--;
-	//清除后置的0
-	if(point)	
+	if(n==NULL)
 	{
-		
-		while(*sp=='0')
-			sp--;
-		if(*sp=='.') //小数点后全是0 其实是整数
+		n=ln_creat(INIT_SIZE);
+		if(n==NULL)
 		{
-			sp--;
-			point=0;
+			fprintf(stderr,"[%s %d] %s error,reason: ln_creat fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
+		}
+	}
+	else
+	{
+		if(ln_checknull(n) !=0)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
 		}
 	}
 
-	//处理指數部分
-	n->zero=0;
-	if(point) //小数
+	//str格式验证
+	if(ln_checkstr(str) !=0)
 	{
-		//把小数往前移动
-		while(sp2<sp)  
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checkstr fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+
+	//设置符号
+	if(*str=='-')
+		n->sign=0;
+	else
+		n->sign=1;
+
+	//设置变量
+	lastdigit=str+strlen(str)-1;	
+	point=strstr(str,".");
+
+	//清除符号
+	if(*str=='+' || *str=='-')
+		str++;
+	//清除起始的0
+	while(str != lastdigit && *str=='0')
+		str++;
+	//碰到0.XXX的情况,回退
+	if(*str=='.')
+		str--;
+
+	//清除小数点后终结的0
+	if(point !=NULL) //存在小数点	
+	{
+		while(*lastdigit=='0')
+			lastdigit--;
+		if(*lastdigit=='.') //小数点后全是0 其实是整数
 		{
-			sp2++;
-			n->zero--;
+			lastdigit--;
+			point=NULL;
 		}
 	}
-	else if(*sp=='0' && sp !=str) //以0结尾的整数 (肯定不是0本身)
+
+	//求出指数
+	n->zero=0;
+	if(point !=NULL) //存在小数点	
+		n->zero=point-lastdigit;
+	else if(*lastdigit=='0' && lastdigit !=str) //以0结尾的整数 (不是0本身)
 	{
-		//抽出结尾的0
-		while(*sp=='0')  //继续遍历
+		while(*lastdigit=='0')  
 		{
-			sp--;
+			lastdigit--;
 			n->zero++;
 		}
 	}
 	
 	i=1;
-	p=n->lcsd;
+	p=n->lsd;
 	p->num=0;
 	
-	if(point)
+	if(point !=NULL) //存在小数点	
 	{
+		//跳过初始0,直奔有效数字
 		if(*str=='0' && *(str+1)=='.')
 			str+=2;
 		while(*str =='0')
 			str++;
 	}
-	while(sp>=str) //从最低位向上构造digit部分
+
+	while(lastdigit>=str) //从最低位向上构造digit部分
 	{
-		if(*sp!='.')
+		if(*lastdigit!='.')
 		{
-			p->num+=(*sp-'0')*i;
-			sp--;
-			if(i==UNIT/10)
+			p->num+=(*lastdigit-'0')*i;
+			lastdigit--;
+			if(i*10==UNIT)
 			{
-				if(sp>=str)
+				if(lastdigit>=str)
 				{
 					i=1;
-					if(p->hcell==n->lcsd && sp>=str)//节点已经用完
-						ln_addsize(n,(sp-str+1)/DIGIT_NUM+1);
+					if(p->hcell==n->lsd) //节点已经用完,分配新节点
+					{
+						if(ln_addcell(n,(lastdigit-str+1)/DIGIT_NUM+1)==NULL)
+						{
+							fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
+							return NULL;
+						}
+					}
 					p=p->hcell;
 					p->num=0;
 				}
@@ -479,111 +579,94 @@ ln str2ln(ln n,const char* str)
 				i*=10;
 		}
 		else
-			sp--;
+			lastdigit--;
 	}
-	n->lcsd=p;
+	n->msd=p;
 	return n;
 }
 
-int ln_get_cellnum(ln n,cell q)
-{
-	int i;
-	cell p=n->lcsd;
-	if(p->num<10)
-		i=1;
-	else if(p->num<100)
-		i=2;
-	else if(p->num<1000)
-		i=3;
-	else
-		i=4;
-	if(p!=q)
-	{
-		while(p!=q)
-		{
-			p=p->hcell;
-			i+=4;
-		}
-		i-=4;
-		p=q;
-		if(p->num<10)
-			i+=1;
-		else if(p->num<100)
-			i+=2;
-		else if(p->num<1000)
-			i+=3;
-		else
-			i+=4;
-	}
-	return i;
-}
-
-
-
-
-
-
-
-
-//把ln转换为字符串
+/*
+ * 作用:把ln转换为字符串
+ * 参数:
+ *	n:要处理的ln
+ * 返回值:
+ * 	成功:返回ln的字符串表示(需要用free释放)
+ * 	失败:NULL
+ */
 char* ln2str(ln n)
 {
-	cell p;
-	char *str,*head,*tail,*tail2;
+	extern int errno;
+	cell a;
+	char *p,*str,*head,*tail,*tail2;
 	size_t size=0,digitnum=0;
 	int i,zero;
-	if(n->zero>=0)
-	{
-		p=n->lcsd;
-		while(p->num==0 && p != n->lcsd)
-			p=p->lcell;
-		i=ln_get_nodenum(n,p);
+	int cellnum;
 
-		str=(char*)malloc(i*DIGIT_NUM+n->zero+10);
-		assert(str);
-		if(p->num==0)
+	//检查参数
+	if(ln_checknull(n)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;	
+	}
+
+	ln_stripleadingzero(n);
+	if(n->zero>=0) //整数的显示
+	{
+		cellnum=ln_cellnum(n);
+		//分配空间
+		str=(char*)malloc(cellnum*DIGIT_NUM+n->zero+10);
+		if(!str)
+		{
+			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
+			return NULL;			
+		}
+
+		a=n->msd;
+		if(a->num==0)
 		{
 			str[0]='0';
 			str[1]='\0';
 			return str;
 		}
 
-		tail=str;
+		p=str;
 		//打印符号
 		if(n->sign==0)
-			*tail++='-';
+			*p++='-';
+
 		i=UNIT/10;
 		while(i)
 		{
-			while(p->num<i)
+			while(a->num<i)
 				i/=10;
-			*tail++=(p->num/i)%10+'0';
+			*p++=(a->num/i)%10+'0';
 			i/=10;
 		}
 
-		while(p!=n->lcsd)
+		while(a!=n->lsd)
 		{
-			p=p->lcell;
-			if(p->num==0)
+			a=a->lcell;
+			if(a->num==0)
 			{
 				for(i=0;i<DIGIT_NUM;i++)
-					*tail++='0';
+					*p++='0';
 			}
 			else
 			{
 				i=UNIT/10;
 				while(i)
 				{
-					*tail++=(p->num/i)%10+'0';
+					*p++=(a->num/i)%10+'0';
 					i/=10;
 				}
 			}
 		}
 		for(i=0;i<n->zero;i++)
-			*tail++='0';
-		*tail++='\0';
+			*p++='0';
+		*p='\0';
 		return str;
 	}
+	/*
 	else
 	{
 		//先计算需要的空间
@@ -678,7 +761,52 @@ char* ln2str(ln n)
 		
 		return str;
 	}
+*/
+	return str;
 }
+#ifdef cyy
+
+
+int ln_get_cellnum(ln n,cell q)
+{
+	int i;
+	cell p=n->lcsd;
+	if(p->num<10)
+		i=1;
+	else if(p->num<100)
+		i=2;
+	else if(p->num<1000)
+		i=3;
+	else
+		i=4;
+	if(p!=q)
+	{
+		while(p!=q)
+		{
+			p=p->hcell;
+			i+=4;
+		}
+		i-=4;
+		p=q;
+		if(p->num<10)
+			i+=1;
+		else if(p->num<100)
+			i+=2;
+		else if(p->num<1000)
+			i+=3;
+		else
+			i+=4;
+	}
+	return i;
+}
+
+
+
+
+
+
+
+
 
 //打印ln
 void print_ln(ln n)

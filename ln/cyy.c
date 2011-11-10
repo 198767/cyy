@@ -2,7 +2,7 @@
 #include "ln_helper.h"
 int main(int argc, char** argv)
 {
-
+	/*
 	ln a;
 	ln b;
 	a=ln_creat(5);
@@ -25,6 +25,8 @@ int main(int argc, char** argv)
 		ln_copy(b,a);
 		ln_info(b);
 		ln_copy(NULL,NULL);
-
+		*/
+	ln a=str2ln(NULL,"00000123456.00000");
+	printf(ln2str(a));
 	return 0;
 }

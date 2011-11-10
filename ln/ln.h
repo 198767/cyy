@@ -59,6 +59,6 @@ lN multiply_lns(lN i,lN j,Res resflag);
 lN ln_square(lN a,Res resflag);
 //求幂
 lN ln_exp_int(lN i,int b,Res resflag);
-/*--------------------操纵函数-----------------------*/
+ * ------------------操纵函数-----------------------*/
 
 #endif
