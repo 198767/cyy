@@ -62,6 +62,7 @@ lN ln_setzero(lN n,int zero);
 //除法
 lN ln_divide_num(lN i,int b,int precision,Divide_mode mode,Res resflag);
 int ln_divideable_num(const lN i,int b);
+lN ln_divide_ln(lN i,lN j);
 
 void ln_info(lN n);
 

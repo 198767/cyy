@@ -804,197 +804,110 @@ lN ln_square(lN a,Res resflag)
 	}
 }
 
+/*
+ * 大数和大数想除
+ */
 
-lN ln_divide_num(lN i,int b,int precision,Divide_mode mode,Res resflag)
+lN ln_divide_ln(lN i,lN j)//,int precision,Divide_mode mode),Res resflag)
 {
-	int res=0;
-	int carry=0;
-	int prec=0;
-	lN k;
-	assert(b!=0);
-	assert(precision>=0);
-	if(precision<0)
-		precision=DIV_PREC;
+	lN a,b,c,q;
+	int zero;
+	int a_digitnum;
+	int b_digitnum;
+	int flag=0;
+	Digit x,y,z;
+	int o;
 
-	if(resflag==newln)
-	{
-		if(b==1|| b==-1 )
-		{
-			k= copy_lns(NULL,i);
-			return ln_multiply_num(k,b,firstln);
-		}
-		k=creat_ln(ln_get_nodenum(i,i->highestdigit));
-		k->zero=i->zero;
-		if(b>0)
-			k->sign=i->sign;
-		else
-		{
-			k->sign=!(i->sign);
-			b=-b;
-		}
-		Digit a=i->highestdigit;
-		while(a!= i->lowestdigit && a->digit==0)
-			a=a->ld;
-		i->highestdigit=a;
-		k->highestdigit=k->lowestdigit->ld;
-		Digit c=k->highestdigit;
-		res=a->digit;
-		while(1)
-		{
-			res=res+carry*UNIT;
-			c->digit=res/b;
-			carry=res%b;
-			if(k->zero<0)
-			{
-				if(prec==0)
-				{
-					if(c->digit !=0) //开始计算小数点个数
-						prec=-k->zero;
-				}
-				else
-					prec+=DIGIT_NUM;
-			}
-			if(a==i->lowestdigit)
-			{
-				if(carry==0) //除得尽
-				{
-					k->lowestdigit=c;
-					break;
-				}
-				else if(prec>=precision) //除不尽，四舍五入保留precision位小数
-				{
-					if(prec==precision)
-					{
-						if(mode==round)
-						{
-							if(a !=i->lowestdigit)
-								res=(a->ld->digit+carry*UNIT)/b;
-							else
-								res=(carry*UNIT)/b;
-							if(res>=UNIT/2)
-								c->digit++;
-						}
-					}
-					else
-					{
-						int l,j=1;
-						for(l=0;l<prec-precision;l++)
-							j*=10;
-						res=c->digit%j;
-						if(mode==round && res>=5*(j/10))
-							c->digit=c->digit-res+j;
-						else
-							c->digit=c->digit-res;
-					}
-					k->lowestdigit=c;
-					break;
-				}
-			}
-			if(a !=i->lowestdigit)
-			{
-				a=a->ld;
-				res=a->digit;
-			}
-			else
-			{
-				res=0;
-				k->zero-=DIGIT_NUM;
-			}
-			if(c==k->lowestdigit)
-			{
-				ln_addsize(k,5);
-				k->lowestdigit=k->highestdigit->hd;
-			}
-			c=c->ld;
-		}
-		return k;
-	}
+	a=copy_lns(NULL,i);
+	b=copy_lns(NULL,j);
+	c=init_ln(0);
+
+	if(a->sign==b->sign)
+		c->sign=1;
 	else
+		c->sign=0;
+	a_digitnum=ln_nodenum(a);
+	b_digitnum=ln_nodenum(b);
+	if(a_digitnum<b_digitnum)
 	{
-		if(b==1|| b==-1 )
-		{
-			return ln_multiply_num(i,b,firstln);
-		}
-		if(b<0)
-		{
-			i->sign=!(i->sign);
-			b=-b;
-		}
-		Digit a=i->highestdigit;
-		while(a != i->lowestdigit && a->digit==0)
-			a=a->ld;
-		Digit c=i->lowestdigit->ld;
-		Digit d=i->lowestdigit;
-		i->highestdigit=c;
-		res=a->digit;
-		while(1)
-		{
-			res=res+carry*UNIT;
-			c->digit=res/b;
-			carry=res%b;
-			if(i->zero<0)
-			{
-				if(prec==0)
-				{
-					if(c->digit !=0) //开始计算小数点个数
-						prec=-i->zero;
-				}
-				else
-					prec+=DIGIT_NUM;
-			}
-			if(a==d)
-			{
-				if(carry==0) //除得尽
-				{
-					i->lowestdigit=c;
-					break;
-				}
-				else if(prec>=precision) //除不尽，四舍五入保留precision位小数
-				{
-					if(prec==precision)
-					{
-						if(mode==round)
-						{
-							if(a !=d)
-								res=(a->ld->digit+carry*UNIT)/b;
-							else
-								res=(carry*UNIT)/b;
-							if(res>=UNIT/2)
-								c->digit++;
-						}
-					}
-					else
-					{
-						int l,j=1;
-						for(l=0;l<prec-precision;l++)
-							j*=10;
-						res=c->digit%j;
-						if(mode==round && res>=5*(j/10))
-							c->digit=c->digit-res+j;
-						else
-							c->digit=c->digit-res;
-					}
-					i->lowestdigit=c;
-					break;
-				}
-			}
-			if(a!=d)
-			{
-				a=a->ld;
-				res=a->digit;
-			}
-			else
-			{
-				res=0;
-				i->zero-=DIGIT_NUM;
-			}
-			if(c==i->lowestdigit)
-			{
-				ln_addsize(i,5);
-				i->lowestdigit=i->highestdigit->hd;
-			}
-			c=c->ld;
-		}
-		return i;
+		zero=a->zero-(b_digitnum-a_digitnum)*DIGIT_NUM;
+		ln_setzero(a,zero);
 	}
+	else if(a_digitnum>b_digitnum)
+	{
+		zero=b->zero-(a_digitnum-b_digitnum)*DIGIT_NUM;
+		ln_setzero(b,zero);
+	}
+	zero=a->zero-b->zero;
+
+	a->sign=1;
+	a->zero=0;
+	b->zero=0;
+	c->zero=0;
+
+	x=a->highestdigit;
+	y=b->highestdigit;
+	z=c->highestdigit;
+
+	for(o=1;o<4;o++)
+	{
+
+		if(x!=a->highestdigit) 
+			z->digit=(x->digit+x->hd->digit*UNIT)/y->digit; //求出z位数
+		else
+			z->digit=x->digit/y->digit; //求出z位数
+		printf("before z->digit=%d\n",z->digit);
+		if(z->digit !=0)
+		{
+			b->sign=0; //b变成负数
+			q=ln_multiply_num(b,z->digit,newln);
+			add_lns(a,q,firstln);
+			free_ln(q);
+			while(a->sign==1) //少减了，再减去
+			{
+				b->sign=0;
+				add_lns(a,b,firstln);
+				z->digit++;
+			}
+			while(a->sign==0) //多减了，补上
+			{
+				b->sign=1;
+				add_lns(a,b,firstln);
+				z->digit--;
+			}
+		}
+
+		printf("after z->digit=%d\n",z->digit);
+		c->lowestdigit=z;
+		if(flag==1)
+			zero-=DIGIT_NUM;
+		flag=1;
+		if(ln_cmp_num(a,0)==0)
+			break;
+
+		if(a->highestdigit==a->lowestdigit->ld)
+		{
+			ln_addsize(a,INIT_SIZE);
+			puts("aaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+		}
+		if(a->highestdigit->digit==0)
+			a->highestdigit=a->highestdigit->ld;
+		a->lowestdigit=a->lowestdigit->ld;
+		a->lowestdigit->digit=0;
+		x=x->ld;
+
+		puts(ln2str(a));
+
+		if(c->lowestdigit->ld==c->highestdigit)
+			ln_addsize(c,INIT_SIZE);
+		z=z->ld;
+		
+	}
+	while(c->highestdigit!=c->lowestdigit && c->highestdigit->digit==0)
+		c->highestdigit=c->highestdigit->ld;
+	c->zero=zero;
+	ln_info(c);
+	free_ln(a);
+	free_ln(b);
+	return c;
 }

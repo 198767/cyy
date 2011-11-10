@@ -159,7 +159,9 @@ lN ln_setval(lN n,int m)
 {
 	Digit p=NULL;
 	if(!n)
+	{
 		n=creat_ln(INIT_SIZE);
+	}
 	if(m<0)
 	{
 		n->sign=0;
@@ -336,7 +338,7 @@ char* ln2str(lN n)
 			digitnum++;
 			i/=10;
 		}
-		i=ln_get_nodenum(n,n->highestdigit);
+		i=ln_nodenum(n);
 		digitnum+=(i-1)*DIGIT_NUM;
 		if(zero<digitnum)
 			size=digitnum+1;
@@ -450,30 +452,30 @@ lN free_ln(lN n)
  */
 lN copy_lns(lN* a,lN b)
 {
-	int size_b=ln_get_nodenum(b,b->highestdigit);
-	int size_a;
-	lN c=NULL;
-	if(!a)
-		c=creat_ln(size_b);
-	else
-	{
-		c=*a;
-		size_a=ln_get_nodenum(c,c->highestdigit);
-		ln_addsize(c,size_b-size_a); //把a的长度设置成和b一样
-	}
-	assert(c);
-	Digit i=c->lowestdigit;
-	Digit j=b->lowestdigit;
-	c->sign=b->sign;
-	c->zero=b->zero;
-	while(size_b--)
-	{
-		i->digit=j->digit;
-		i=i->hd;
-		j=j->hd;
-	}
-	c->highestdigit=i->ld;
-	return c;
+	 int size_b=ln_get_nodenum(b,b->highestdigit);
+	 int size_a;
+	 lN c=NULL;
+	 if(!a)
+		 c=creat_ln(size_b);
+	 else
+	 {
+		 c=*a;
+		 size_a=ln_get_nodenum(c,c->highestdigit);
+		 ln_addsize(c,size_b-size_a); //把a的长度设置成和b一样
+	 }
+	 assert(c);
+	 Digit i=c->lowestdigit;
+	 Digit j=b->lowestdigit;
+	 c->sign=b->sign;
+	 c->zero=b->zero;
+	 while(size_b--)
+	 {
+		 i->digit=j->digit;
+		 i=i->hd;
+		 j=j->hd;
+	 }
+	 c->highestdigit=i->ld;
+	 return c;
 }
 
 //截取n的digit部分m个节点,如果m过大则n不变
