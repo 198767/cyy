@@ -24,7 +24,5 @@ int main(int argc, char** argv)
 		ln_info(a);
 		ln_copy(b,a);
 		ln_info(b);
-		ln_copy(NULL,NULL);
-
 	return 0;
 }
