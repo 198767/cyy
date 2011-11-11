@@ -7,9 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
 //获取ln的十进制位数的和
-/*
 int ln_digitsum(lN n)
 {
 	Digit p=n->lowestdigit->ld;
@@ -30,7 +28,7 @@ int ln_digitsum(lN n)
 	while(p !=n->highestdigit);
 	return sum;
 }
-*/
+
 
 /*
  * 大数和整数相乘

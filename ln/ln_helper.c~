@@ -979,16 +979,16 @@ ln str2ln(ln n,const char* str)
  * 	成功:返回ln的字符串表示(需要用free释放)
  * 	失败:NULL
  */
-
 char* ln2str(ln n)
 {
 	extern int errno;
 	cell a;
-	char *p,*str,*head,*tail,*tail2;
-	size_t size=0,digitnum=0;
+	char *p,*str;
+	int size;
 	int i,power;
 	int cellnum;
 	int zeronum;
+	int digitnum;
 
 	//检查参数
 	if(ln_checknull(n)!=0)
@@ -1066,162 +1066,100 @@ char* ln2str(ln n)
 		for(i=0;i<n->power;i++)
 			*p++='0';
 		*p='\0';
-		return str;
 	}
 	else //小数的显示
 	{
-
 		 //先计算需要的空间
-		 size=
-		 //
-		 zero=-n->zero;
-		 p=n->highestdigit;
-		 i=UNIT/10;
-		 while(i)
-		 {
-		 while(p->digit<i)
-		 i/=10;
-		 digitnum++;
-		 i/=10;
-		 }
-		 i=ln_nodenum(n);
-		 digitnum+=(i-1)*DIGIT_NUM;
-		 if(zero<digitnum)
-		 size=digitnum+1;
-		 else
-		 size=2+zero;
-		 if(n->sign==0)
-		 size++;
+		digitnum=ln_digitnum(n);
+		if(digitnum==-1)
+		{
+			fprintf(stderr,"[%s %d] %s ln_digitnum error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
+			return NULL;			
+		}
 
-
-
-
-
-
-
-
+		power=-n->power;
+		if(digitnum>power)
+			size=digitnum+1+1;
+		else
+			size=power+2+1;
+		
+		if(n->sign==0) //多一个'-'字符空间
+			size++;
 
 		//分配空间
-		size=MAX(ln_cellnum(n)*DIGIT_NUM,-n->power)+10;
 		str=(char*)malloc(size);
 		if(!str)
 		{
 			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
 			return NULL;			
 		}
+		p=str+size-1;  //p指向字符串尾部
+		*p--='\0';
 
-		//先计算需要的空间
-		//
-		//
-		//
-		p=n->msd;
-
-	
-
-
-
-		tail=str+size-1;
-		tail2=tail-1;
-		head=str;
-		*tail--='\0';
-		if(n->sign==0)
-		{
-			*head++='-';
-			size--;
-		}
-		p=n->lcellcsd;
+		a=n->lsd;
 		i=1;
-		if(zero<digitnum) //小数点在中间
+		while(a!=n->msd)
 		{
-			size-=zero+1;
-			while(zero) //输出小数点后半部分
+			*p--=(a->num/i)%10+'0';
+			i*=10;
+			if(i==UNIT)
 			{
-				*tail--=(p->num/i)%10+'0';
-				i*=10;
-				if(i==UNIT)
-				{
-					i=1;
-					p=p->hcell;
-				}
-				zero--;
+				i=1;
+				a=a->hcell;
 			}
-			*tail--='.';
-			while(size) //输出小数点前半部分
-			{
-				*tail--=(p->num/i)%10+'0';
-				i*=10;
-				if(i==UNIT)
-				{
-					i=1;
-					p=p->hcell;
-				}
-				size--;
-			}
+			power--;
+			if(power==0)
+				*p--='.';
 		}
-		else //小数点在外面
+		
+		//处理最高节点
+		i=1;
+		while(i<=a->num)
 		{
-			*head++='0';
-			*head++='.';
-			zero-=digitnum;
-			while(digitnum)
-			{
-				*tail--=(p->num/i)%10+'0';
-				i*=10;
-				if(i==UNIT)
-				{
-					i=1;
-					p=p->hcell;
-				}
-				digitnum--;
-			}
-			while(zero)
-			{
-				*head++='0';
-				zero--;
-			}
+			*p--=(a->num/i)%10+'0';
+			power--;
+			if(power==0)
+				*p--='.';
+			i*=10;
 		}
-		//去除结尾0
-		while(*tail2=='0')
-			tail2--;
-		if(*tail2=='.')
-			*tail2='\0';
-		else
-			*(tail2+1)='\0';
+		
+		//剩下的指数用0填充
+		while(power>0)
+		{
+			*p--='0';
+			power--;
+			if(power==0)
+				*p--='.';
+		}
 
-		return str;
+
+		if(*(p+1)=='.')
+			*p--='0';
+		if(n->sign==0)
+			*str='-';
 	}
 	return str;
 }
 
-#ifdef cyy
-
-
-
-
-
-//打印ln
+/*
+ * 作用:打印ln的值
+ * 参数:
+ *	n:要输出的ln
+ * 返回值:
+ * 	无
+ */
 void print_ln(ln n)
 {
-	char *p=ln2str(n);
+	char* p;
+	p=ln2str(n);
+	if(!p)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln2str fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return;			
+	}
 	puts(p);
 	free(p);
-}
-
-
-
-
-//截取n的digit部分m个节点,如果m过大则n不变
-void ln_trunc(ln n,int m)
-{
-	assert(m>0);
-	int i=1;
-	cell p=n->lcellcsd;
-	while(i!=m&&p!=n->lcellcsd)
-	{
-		p=p->hcell;
-		i++;
-	}
-	n->lcellcsd=p;
+	return;			
 }
 
 #endif
