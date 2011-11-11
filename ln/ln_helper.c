@@ -451,6 +451,7 @@ ln ln_copy(ln a,ln b)
 
 /*
  * 作用:比较ln a和ln b的大小
+ * 副作用:使用ln_stripleadingzero()把a,b整数部分前置0去掉
  * 参数:
  * 	a,b:待比较的ln
  * 返回值:
@@ -459,127 +460,117 @@ ln ln_copy(ln a,ln b)
  * 	-1: a<b
  * 	-2: 出错
  */
-int ln_cmp(lN a,lN b)
+int ln_cmp(ln a,ln b)
 {
-	assert(a&&b);
-	int zero_a=1,zero_b=1;
-	int minzero;
-	int res=0;
-	Digit p;
-	Digit q;
+	int res;
+	cell p,q;
 	
-	//验证0	
-	p=a->highestdigit;
-	while(1)
+	//检查参数
+	if(ln_checknull(a)!=0)
 	{
-		if(p->digit !=0)
-		{
-			zero_a=0;
-			break;
-		}
-		if(p==a->lowestdigit)
-			break;
-		p=p->ld;
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -2;	
 	}
-	a->highestdigit=p;
-	q=b->highestdigit;
-	while(1)
+	if(ln_checknull(b)!=0)
 	{
-		if(q->digit !=0)
-		{
-			zero_b=0;
-			break;
-		}
-		if(q==b->lowestdigit)
-			break;
-		q=q->ld;
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -2;	
 	}
-	b->highestdigit=q;
+	
+	ln_stripleadingzero(a);
+	ln_stripleadingzero(b);
 
-
-
-	if(zero_a && zero_b)
+	if(a->msd->num==0 && b->msd->num==0) //a,b都是0
 		return 0;
-	if(zero_a)
+	if(a->msd->num==0) //a是0
 	{
-		if(b->sign==1)
+		if(b->sign==1) //正数
 			return -1;
 		else
 			return 1;
 	}
-	if(zero_b)
+	if(b->msd->num==0) //b是0
 	{
-		if(a->sign==1)
+		if(a->sign==1) //正数
 			return 1;
 		else
 			return -1;
 	}
 
-	//一正一负
-	if(a->sign>b->sign)
+	//a,b一正一负
+	if(a->sign > b->sign)
 		return 1;
-	else if(a->sign<b->sign)
+	else if(a->sign < b->sign)
 		return -1;
-	//符号相等
-	minzero=MIN(a->zero,b->zero);
-	ln_setzero(a,minzero);
-	ln_setzero(b,minzero);
-	if(a->zero>b->zero)
-		res=1;
-	else if(a->zero<b->zero)
-		res=-1;
-	else
-	{	
-		p=a->lowestdigit;
-		q=b->lowestdigit;
-		while(1)
+
+	//到这边a,b符号相等
+	//把指数调整为一致
+	if(a->power > b->power)
+		ln_adjustpower(a,b->power-a->power);
+	if(a->power < b->power)
+		ln_adjustpower(b,a->power-b->power);
+	
+	p=a->lsd;
+	q=b->lsd;
+	res=0;
+	while(1)
+	{
+		if(p->num>q->num)
+			res=1;
+		else if(p->num<q->num)
+			res=-1;
+		if(p==a->msd)
 		{
-			if(p->digit>q->digit)
-				res=1;
-			else if(p->digit<q->digit)
+			if(q!=b->msd)
 				res=-1;
-			if(p==a->highestdigit)
-			{
-				if(q!= b->highestdigit)
-				{
-					res=-1;
-				}
-				break;
-			}
-			if(q==b->highestdigit)
-			{
-				if(p!= a->highestdigit)
-					res=1;
-				break;
-			}
-			p=p->hd;
-			q=q->hd;
+			break;
 		}
+		if(q==b->msd)
+		{
+			if(p!= a->msd)
+				res=1;
+			break;
+		}
+		p=p->hcell;
+		q=q->hcell;
 	}
 	if(a->sign==0) //负数
 		res*=-1;
 	return res;
 }
 
-
-int ln_cmp_num(lN a,int b)
+/*
+ * 作用:比较ln a和int b的大小
+ * 副作用:使用ln_stripleadingzero()把a整数部分前置0去掉
+ * 参数:
+ * 	a:待比较的ln
+ * 	b:待比较的int
+ * 返回值:
+ * 	0: a=b
+ * 	1: a>b
+ * 	-1: a<b
+ * 	-2: 出错
+ */
+int ln_cmp_int(ln a,int b)
 {
 	int res;
-	lN c;
-	c=ln_setval(NULL,b);
+	ln c;
+	//检查参数
+	if(ln_checknull(a)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -2;	
+	}
+	c=ln_init(b);
+	if(c==NULL)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_init fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -2;	
+	}
 	res=ln_cmp(a,c);
-	free_ln(c);
+	ln_free(&c);
 	return res;
 }
-
-
-
-
-
-
-
-
-
 
 /*
  * 作用:检查str的格式是否为(+-)?\d+(.\d+)? 该格式的数字可以用ln表示
@@ -680,9 +671,7 @@ int ln_endingzeronum(ln n)
 	//去除前置0
 	ln_stripleadingzero(n);
 	if(n->msd==0)  //整数部分是0
-	{
 		return 0;
-	}
 
 	i=0;
 	p=n->lsd;
@@ -716,8 +705,9 @@ int ln_endingzeronum(ln n)
  */
 ln ln_adjustpower(ln n,int inc_power)
 {
-	int a,b;
+	int a;
 	int res,carry;
+	int zeronum;
 	cell p;
 
 	//验证参数
@@ -727,6 +717,16 @@ ln ln_adjustpower(ln n,int inc_power)
 		return NULL;
 	}
 
+	//如果n是0,让它随便设置指数,反正都一样
+	if(ln_cmp_int(n,0)==0)
+	{
+		//设置新的指数
+		n->power+=inc_power;  
+		return n;
+	}
+
+	if(inc_power==0) //指数不变
+		return n;
 	if(inc_power<0) //减少指数
 	{
 		//设置新的指数
@@ -788,11 +788,50 @@ ln ln_adjustpower(ln n,int inc_power)
 	}
 	else
 	{
+		//获取结尾0的个数
+		zeronum=ln_endingzeronum(n);
+		if(zeronum==-1)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: ln_endingzeronum fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
+		}
+		//不能去掉这么多0
+		if(inc_power>zeronum)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: inc_power too large (%d)\n",__FILE__,__LINE__,__FUNCTION__,inc_power);
+			return NULL;
+		}
+		//设置新的指数
+		n->power+=inc_power;  
+		
+		//先处理结尾的0节点
+		p=n->lsd;
+		while(p->num==0 && inc_power>=DIGIT_NUM)
+		{
+			inc_power-=DIGIT_NUM;
+			p=p->hcell;
+		}
+		n->lsd=p;
 
+		//除以剩下的0
+		if(inc_power==0)
+			return n;
 
-
-		fprintf(stderr,"[%s %d] %s error,reason:TODO \n",__FILE__,__LINE__,__FUNCTION__);
-		return NULL;
+		a=power10(inc_power);
+		p=n->msd;
+		res=0;
+		carry=0;
+		while(1)
+		{
+			res=p->num+carry*UNIT;
+			p->num=res/a;
+			printf("divnum=%d\n",p->num);
+			printf("a=%d\n",a);
+			carry=res%a;
+			if(p==n->lsd)
+				break;
+			p=p->lcell;
+		}
 	}
 	return n;
 }
@@ -1047,7 +1086,7 @@ char* ln2str(ln n)
 			*head++='-';
 			size--;
 		}
-		p=n->lcsd;
+		p=n->lcellcsd;
 		i=1;
 		if(zero<digitnum) //小数点在中间
 		{
@@ -1140,13 +1179,13 @@ void ln_trunc(ln n,int m)
 {
 	assert(m>0);
 	int i=1;
-	cell p=n->lcsd;
-	while(i!=m&&p!=n->lcsd)
+	cell p=n->lcellcsd;
+	while(i!=m&&p!=n->lcellcsd)
 	{
 		p=p->hcell;
 		i++;
 	}
-	n->lcsd=p;
+	n->lcellcsd=p;
 }
 
 #endif

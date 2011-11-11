@@ -66,6 +66,7 @@ void ln_info(ln n);
  * 	失败:NULL
  */
 ln ln_setval(ln n,int new_value);
+#define ln_init(init_value) ln_setval(NULL,init_value)
 
 /*
  * 作用:增加ln的节点,新节点在lsd于msd之间
@@ -116,6 +117,32 @@ int ln_digitnum(ln n);
  */
 ln ln_copy(ln a,ln b);
 
+/*
+ * 作用:比较ln a和ln b的大小
+ * 副作用:使用ln_stripleadingzero()把a,b整数部分前置0去掉
+ * 参数:
+ * 	a,b:待比较的ln
+ * 返回值:
+ * 	0: a=b
+ * 	1: a>b
+ * 	-1: a<b
+ * 	-2: 出错
+ */
+int ln_cmp(ln a,ln b);
+
+/*
+ * 作用:比较ln a和int b的大小
+ * 副作用:使用ln_stripleadingzero()把a整数部分前置0去掉
+ * 参数:
+ * 	a:待比较的ln
+ * 	b:待比较的int
+ * 返回值:
+ * 	0: a=b
+ * 	1: a>b
+ * 	-1: a<b
+ * 	-2: 出错
+ */
+int ln_cmp_int(ln a,int b);
 
 /*
  * 作用:检查str的格式是否为(+-)?\d+(.\d+)? 该格式的数字可以用ln表示
@@ -157,6 +184,7 @@ ln ln_adjustpower(ln n,int inc_power);
  * 	失败:NULL
  */
 ln str2ln(ln n,const char* str);
+#define ln_init_str(str) str2ln(NULL,str)
 
 /*
  * 作用:把ln转换为字符串
