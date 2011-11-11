@@ -164,6 +164,17 @@ int ln_checkstr(const char* str);
 void ln_stripleadingzero(ln n);
 
 /*
+ * 作用:获取ln的整数部分的结尾0的个数
+ * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉
+ * 参数:
+ *	n:要处理的ln
+ * 返回值:
+ * 	成功:返回个数
+ * 	失败:-1
+ */
+int ln_endingzeronum(ln n)
+
+/*
  * 作用:调整指数部分
  * 参数:
  *	n:要处理的ln
@@ -184,6 +195,7 @@ ln ln_adjustpower(ln n,int inc_power);
  * 	失败:NULL
  */
 ln str2ln(ln n,const char* str);
+#define ln_init_str(str) str2ln(NULL,str)
 
 /*
  * 作用:把ln转换为字符串

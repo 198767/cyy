@@ -972,7 +972,7 @@ ln str2ln(ln n,const char* str)
 
 /*
  * 作用:把ln转换为字符串
- * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉,使用ln_stripleadingzero()把ln整数部分后置0放入指数
+ * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉,使用ln_adjustpower()把ln整数部分后置0放入指数
  * 参数:
  *	n:要处理的ln
  * 返回值:
@@ -980,7 +980,6 @@ ln str2ln(ln n,const char* str)
  * 	失败:NULL
  */
 
-/*
 char* ln2str(ln n)
 {
 	extern int errno;
@@ -989,6 +988,7 @@ char* ln2str(ln n)
 	size_t size=0,digitnum=0;
 	int i,power;
 	int cellnum;
+	int zeronum;
 
 	//检查参数
 	if(ln_checknull(n)!=0)
@@ -997,24 +997,44 @@ char* ln2str(ln n)
 		return NULL;	
 	}
 
+	//剔除整数部分前置0
 	ln_stripleadingzero(n);
+	zeronum=ln_endingzeronum(n);
+	if(zeronum==-1)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_endingzeronum fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+
+	//剔除整数部分结尾0
+	if(ln_adjustpower(n,zeronum)==NULL)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_adjustpower fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+
+	//如果n为0
+	if(ln_cmp_int(n,0)==0)
+	{
+		str=strdup("0");
+		if(str==NULL)
+		{
+			fprintf(stderr,"[%s %d] %s strdup error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
+			return NULL;			
+		}
+		return str;
+	}
+
+	//获取整数部分结尾的0个数
 	if(n->power>=0) //整数的显示
 	{
 		cellnum=ln_cellnum(n);
 		//分配空间
 		str=(char*)malloc(cellnum*DIGIT_NUM+n->power+10);
-		if(!str)
+		if(str==NULL)
 		{
 			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
 			return NULL;			
-		}
-
-		a=n->msd;
-		if(a->num==0)
-		{
-			str[0]='0';
-			str[1]='\0';
-			return str;
 		}
 
 		p=str;
@@ -1023,6 +1043,7 @@ char* ln2str(ln n)
 			*p++='-';
 
 		//显示最高位节点
+		a=n->msd;
 		i=UNIT/10;
 		while(i)
 		{
@@ -1035,19 +1056,11 @@ char* ln2str(ln n)
 		while(a!=n->lsd)
 		{
 			a=a->lcell;
-			if(a->num==0)
+			i=UNIT/10;
+			while(i)
 			{
-				for(i=0;i<DIGIT_NUM;i++)
-					*p++='0';
-			}
-			else
-			{
-				i=UNIT/10;
-				while(i)
-				{
-					*p++=(a->num/i)%10+'0';
-					i/=10;
-				}
+				*p++=(a->num/i)%10+'0';
+				i/=10;
 			}
 		}
 		for(i=0;i<n->power;i++)
@@ -1057,6 +1070,38 @@ char* ln2str(ln n)
 	}
 	else //小数的显示
 	{
+
+		/*
+		 //先计算需要的空间
+		 size=ln_digitnum(n);
+		 if(size==-1)
+		 //
+		 zero=-n->zero;
+		 p=n->highestdigit;
+		 i=UNIT/10;
+		 while(i)
+		 {
+		 while(p->digit<i)
+		 i/=10;
+		 digitnum++;
+		 i/=10;
+		 }
+		 i=ln_nodenum(n);
+		 digitnum+=(i-1)*DIGIT_NUM;
+		 if(zero<digitnum)
+		 size=digitnum+1;
+		 else
+		 size=2+zero;
+		 if(n->sign==0)
+		 size++;
+
+
+
+
+
+
+
+
 
 		//分配空间
 		size=MAX(ln_cellnum(n)*DIGIT_NUM,-n->power)+10;
@@ -1146,18 +1191,12 @@ char* ln2str(ln n)
 			*(tail2+1)='\0';
 
 		return str;
+		*/
 	}
 	return str;
 }
-*/
 
 #ifdef cyy
-
-
-
-
-
-
 
 
 
