@@ -27,7 +27,7 @@ ln ln_creat(int cellnum)
 
 	n->lsd=NULL;
 	n->msd=NULL;
-	n->zero=0;
+	n->power=0;
 	n->sign=1;
 
 	for(i=0;i<cellnum;i++)
@@ -97,6 +97,35 @@ void ln_free(ln* n)
 	return;
 }
 
+/*
+ * 作用:获取10的乘方,这个功能很常用
+ * 参数:
+ *	power:乘方的指数，必须>=0
+ * 返回值:
+ * 	成功:乘方
+ * 	失败:返回-1
+ */
+int power10(int power)
+{
+	int i;
+	int base=10;
+	int res=1;
+	if(power<0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: power <0\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;
+	}
+	else if(power==0)
+		return 1;
+	else if(power==1)
+		return base;
+	else
+	{
+		for(i=0;i<power;i++)
+			res*=base;
+		return res;
+	}
+}
 
 /*
  * 作用:检查函数传入的ln参数是否合法(不包含NULL)
@@ -151,7 +180,7 @@ void ln_info(ln n)
 		return;	
 	}
 	printf("ln_addr=%d sign=%d \n",(int)n,n->sign);
-	printf("ln_addr=%d zero=%d \n",(int)n,n->zero);
+	printf("ln_addr=%d power=%d \n",(int)n,n->power);
 	if(p)
 	{
 		while(p!=n->msd)
@@ -194,7 +223,7 @@ ln ln_setval(ln n,int new_value)
 	}
 	else
 		n->sign=1;
-	n->zero=0;
+	n->power=0;
 	p=n->lsd;
 	while(1)
 	{
@@ -222,7 +251,7 @@ ln ln_setval(ln n,int new_value)
 }
 
 /*
- * 作用:增加ln的节点,新节点在lsd于msd之间
+ * 作用:增加ln的节点,新节点在lsd于msd之间,并且num初始化为0
  * 参数:
  *	n:要处理的ln
  *	inc_num:增加的节点数
@@ -266,7 +295,7 @@ ln ln_addcell(ln n,int inc_num)
 }
 
 /*
- * 作用:获取ln从lsd截止到q节点处的节点个数(包括q)
+ * 作用:获取ln整数部分从lsd节点截止到q节点处的节点个数(包括q)
  * 参数:
  *	n:要计算的ln
  *	q:截止节点
@@ -292,6 +321,52 @@ int ln_untilcellnum(ln n,cell q)
 			return -1;
 		}
 		i++;
+	}
+	return i;
+}
+
+
+/*
+ * 作用:获取ln整数部分的十进制位数
+ * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉
+ * 参数:
+ *	n:要计算的ln
+ *	q:截止节点
+ * 返回值:
+ * 	成功:返回十进制位数
+ * 	失败:返回-1
+ */
+int ln_digitnum(ln n)
+{
+	int i,j;
+	cell p;
+
+	//检查参数
+	if(ln_checknull(n) !=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;	
+	}
+
+	//去掉前置0,避免计算出错
+	ln_stripleadingzero(n);
+
+	//计算有效节点总数
+	i=ln_cellnum(n);
+	if(i==-1)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_cellnum fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;	
+	}
+	i=(i-1)*4;
+
+	//计算最高节点的位数
+	p=n->msd;
+	j=1;
+	while(j<=p->num)
+	{
+		i++;
+		j*=10;
 	}
 	return i;
 }
@@ -359,7 +434,7 @@ ln ln_copy(ln a,ln b)
 		}
 	}
 	a->sign=b->sign;
-	a->zero=b->zero;
+	a->power=b->power;
 	p=a->lsd;
 	q=b->lsd;
 	while(cellnum_b>0)
@@ -372,6 +447,142 @@ ln ln_copy(ln a,ln b)
 	a->msd=p->lcell;
 	return a;
 }
+
+
+/*
+ * 作用:比较ln a和ln b的大小
+ * 参数:
+ * 	a,b:待比较的ln
+ * 返回值:
+ * 	0: a=b
+ * 	1: a>b
+ * 	-1: a<b
+ * 	-2: 出错
+ */
+
+
+
+int ln_cmp(lN a,lN b)
+{
+	assert(a&&b);
+	int zero_a=1,zero_b=1;
+	int minzero;
+	int res=0;
+	Digit p;
+	Digit q;
+	
+	//验证0	
+	p=a->highestdigit;
+	while(1)
+	{
+		if(p->digit !=0)
+		{
+			zero_a=0;
+			break;
+		}
+		if(p==a->lowestdigit)
+			break;
+		p=p->ld;
+	}
+	a->highestdigit=p;
+	q=b->highestdigit;
+	while(1)
+	{
+		if(q->digit !=0)
+		{
+			zero_b=0;
+			break;
+		}
+		if(q==b->lowestdigit)
+			break;
+		q=q->ld;
+	}
+	b->highestdigit=q;
+
+
+
+	if(zero_a && zero_b)
+		return 0;
+	if(zero_a)
+	{
+		if(b->sign==1)
+			return -1;
+		else
+			return 1;
+	}
+	if(zero_b)
+	{
+		if(a->sign==1)
+			return 1;
+		else
+			return -1;
+	}
+
+	//一正一负
+	if(a->sign>b->sign)
+		return 1;
+	else if(a->sign<b->sign)
+		return -1;
+	//符号相等
+	minzero=MIN(a->zero,b->zero);
+	ln_setzero(a,minzero);
+	ln_setzero(b,minzero);
+	if(a->zero>b->zero)
+		res=1;
+	else if(a->zero<b->zero)
+		res=-1;
+	else
+	{	
+		p=a->lowestdigit;
+		q=b->lowestdigit;
+		while(1)
+		{
+			if(p->digit>q->digit)
+				res=1;
+			else if(p->digit<q->digit)
+				res=-1;
+			if(p==a->highestdigit)
+			{
+				if(q!= b->highestdigit)
+				{
+					res=-1;
+				}
+				break;
+			}
+			if(q==b->highestdigit)
+			{
+				if(p!= a->highestdigit)
+					res=1;
+				break;
+			}
+			p=p->hd;
+			q=q->hd;
+		}
+	}
+	if(a->sign==0) //负数
+		res*=-1;
+	return res;
+}
+
+
+int ln_cmp_num(lN a,int b)
+{
+	int res;
+	lN c;
+	c=ln_setval(NULL,b);
+	res=ln_cmp(a,c);
+	free_ln(c);
+	return res;
+}
+
+
+
+
+
+
+
+
+
 
 /*
  * 作用:检查str的格式是否为(+-)?\d+(.\d+)? 该格式的数字可以用ln表示
@@ -443,12 +654,150 @@ void ln_stripleadingzero(ln n)
 		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return;
 	}
-
 	p=n->msd;
 	while(p->num==0 && p != n->lsd)
 		p=p->lcell;
 	n->msd=p;
 	return;
+}
+
+/*
+ * 作用:获取ln的整数部分的结尾0的个数
+ * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉
+ * 参数:
+ *	n:要处理的ln
+ * 返回值:
+ * 	成功:返回个数
+ * 	失败:-1
+ */
+int ln_endingzeronum(ln n)
+{
+	cell p;
+	int i,j;
+	if(ln_checknull(n)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return -1;
+	}
+	
+	//去除前置0
+	ln_stripleadingzero(n);
+	if(n->msd==0)  //整数部分是0
+	{
+		return 0;
+	}
+
+	i=0;
+	p=n->lsd;
+	while(1)
+	{
+		if(p->num==0)
+			i+=DIGIT_NUM;
+		else
+		{
+			j=10;
+			while(p->num%j==0)
+			{
+				i++;
+				j*=10;
+			}
+			return i;
+		}
+		p=p->hcell;
+	}
+	return i;
+}
+
+/*
+ * 作用:调整指数部分
+ * 参数:
+ *	n:要处理的ln
+ * 	inc_power:指数增量 >0 增加指数,把整数部分结尾的0去掉 <0 减少指数,增加整数部分结尾的0
+ * 返回值:
+ * 	成功:ln
+ * 	失败:返回NULL
+ */
+ln ln_adjustpower(ln n,int inc_power)
+{
+	int a,b;
+	int res,carry;
+	cell p;
+
+	//验证参数
+	if(ln_checknull(n) !=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+
+	if(inc_power<0) //减少指数
+	{
+		//设置新的指数
+		n->power+=inc_power;  
+		//转正
+		inc_power*=-1;  
+		
+		//先乘上剩余部分的0
+		a=power10(inc_power%DIGIT_NUM);
+		p=n->lsd;
+		res=0;
+		carry=0;
+		while(1)
+		{
+			res=a*p->num+carry;
+			p->num=res%UNIT;
+			carry=res/UNIT;
+			if(p==n->msd)
+			{
+				if(carry>0) //存在进位
+				{
+					if(n->lsd->lcell ==n->msd) //节点不够
+					{
+						PUT_LINE;
+						if(ln_addcell(n,INIT_SIZE) ==NULL) //分配失败
+						{
+							fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
+							return NULL;
+						}
+					}
+					p->hcell->num=carry;
+					n->msd=p->hcell;
+				}
+				break;
+			}
+			p=p->hcell;
+		}
+
+		inc_power/=DIGIT_NUM;
+		while(inc_power>0)
+		{
+			if(n->lsd->lcell !=n->msd) //还有多余的节点，利用它
+			{
+				n->lsd=n->lsd->lcell;
+				n->lsd->num=0;
+				inc_power-=DIGIT_NUM;
+			}
+			else //一次性分配剩下的节点
+			{
+				if(ln_addcell(n,inc_power/DIGIT_NUM)==NULL)
+				{
+					fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
+					return NULL;
+				}
+				n->lsd=n->msd->hcell;
+				break;
+			}
+		}
+	}
+	else
+	{
+
+
+
+		fprintf(stderr,"[%s %d] %s error,reason:TODO \n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+	return n;
 }
 
 /*
@@ -525,22 +874,22 @@ ln str2ln(ln n,const char* str)
 	}
 
 	//求出指数
-	n->zero=0;
+	n->power=0;
 	if(point !=NULL) //存在小数点	
-		n->zero=point-lastdigit;
+		n->power=point-lastdigit;
 	else if(*lastdigit=='0' && lastdigit !=str) //以0结尾的整数 (不是0本身)
 	{
 		while(*lastdigit=='0')  
 		{
 			lastdigit--;
-			n->zero++;
+			n->power++;
 		}
 	}
-	
+
 	i=1;
 	p=n->lsd;
 	p->num=0;
-	
+
 	if(point !=NULL) //存在小数点	
 	{
 		//跳过初始0,直奔有效数字
@@ -587,19 +936,22 @@ ln str2ln(ln n,const char* str)
 
 /*
  * 作用:把ln转换为字符串
+ * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉,使用ln_stripleadingzero()把ln整数部分后置0放入指数
  * 参数:
  *	n:要处理的ln
  * 返回值:
  * 	成功:返回ln的字符串表示(需要用free释放)
  * 	失败:NULL
  */
+
+/*
 char* ln2str(ln n)
 {
 	extern int errno;
 	cell a;
 	char *p,*str,*head,*tail,*tail2;
 	size_t size=0,digitnum=0;
-	int i,zero;
+	int i,power;
 	int cellnum;
 
 	//检查参数
@@ -610,11 +962,11 @@ char* ln2str(ln n)
 	}
 
 	ln_stripleadingzero(n);
-	if(n->zero>=0) //整数的显示
+	if(n->power>=0) //整数的显示
 	{
 		cellnum=ln_cellnum(n);
 		//分配空间
-		str=(char*)malloc(cellnum*DIGIT_NUM+n->zero+10);
+		str=(char*)malloc(cellnum*DIGIT_NUM+n->power+10);
 		if(!str)
 		{
 			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
@@ -634,6 +986,7 @@ char* ln2str(ln n)
 		if(n->sign==0)
 			*p++='-';
 
+		//显示最高位节点
 		i=UNIT/10;
 		while(i)
 		{
@@ -661,37 +1014,34 @@ char* ln2str(ln n)
 				}
 			}
 		}
-		for(i=0;i<n->zero;i++)
+		for(i=0;i<n->power;i++)
 			*p++='0';
 		*p='\0';
 		return str;
 	}
-	/*
-	else
+	else //小数的显示
 	{
-		//先计算需要的空间
-		zero=-n->zero;
-		p=n->lcsd;
-		i=UNIT/10;
-		while(i)
-		{
-			while(p->num<i)
-				i/=10;
-			digitnum++;
-			i/=10;
-		}
-		i=ln_nodenum(n);
-		digitnum+=(i-1)*DIGIT_NUM;
-		if(zero<digitnum)
-			size=digitnum+1;
-		else 
-			size=2+zero;
-		if(n->sign==0)
-			size++;
 
-		str=(char*)malloc(size+1);
-		assert(str);
-		tail=str+size;
+		//分配空间
+		size=MAX(ln_cellnum(n)*DIGIT_NUM,-n->power)+10;
+		str=(char*)malloc(size);
+		if(!str)
+		{
+			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
+			return NULL;			
+		}
+
+		//先计算需要的空间
+		//
+		//
+		//
+		p=n->msd;
+
+	
+
+
+
+		tail=str+size-1;
 		tail2=tail-1;
 		head=str;
 		*tail--='\0';
@@ -758,47 +1108,16 @@ char* ln2str(ln n)
 			*tail2='\0';
 		else
 			*(tail2+1)='\0';
-		
+
 		return str;
 	}
-*/
 	return str;
 }
+*/
+
 #ifdef cyy
 
 
-int ln_get_cellnum(ln n,cell q)
-{
-	int i;
-	cell p=n->lcsd;
-	if(p->num<10)
-		i=1;
-	else if(p->num<100)
-		i=2;
-	else if(p->num<1000)
-		i=3;
-	else
-		i=4;
-	if(p!=q)
-	{
-		while(p!=q)
-		{
-			p=p->hcell;
-			i+=4;
-		}
-		i-=4;
-		p=q;
-		if(p->num<10)
-			i+=1;
-		else if(p->num<100)
-			i+=2;
-		else if(p->num<1000)
-			i+=3;
-		else
-			i+=4;
-	}
-	return i;
-}
 
 
 
@@ -831,41 +1150,6 @@ void ln_trunc(ln n,int m)
 		i++;
 	}
 	n->lcsd=p;
-}
-//减少指数部分,多余的0放到整数部分
-ln ln_setzero(ln n,int zero)
-{
-	assert(n);
-	assert(n->zero>=zero);
-	int a,b;
-	int i,j;
-	cell d=NULL;
-	a=n->zero-zero;
-
-	n->zero=zero;
-	if(a==0)
-		return n;
-	b=a%DIGIT_NUM;
-	j=1;
-	for(i=0;i<b;i++)
-		j*=10;
-	if(j>1)
-	{
-		ln_multiply_num(n,j,firstln);
-	}
-	while(a>=DIGIT_NUM)
-	{
-		d=(cell)malloc(sizeof(struct _cell));
-		assert(d);
-		d->num=0;
-		d->hcell=n->lcsd;
-		d->lcell=n->lcsd->lcell;
-		n->lcsd->lcell->hcell=d;
-		n->lcsd->lcell=d;
-		n->lcsd=d;
-		a-=DIGIT_NUM;
-	}
-	return n;
 }
 
 #endif

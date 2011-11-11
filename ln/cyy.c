@@ -26,7 +26,9 @@ int main(int argc, char** argv)
 		ln_info(b);
 		ln_copy(NULL,NULL);
 		*/
-	ln a=str2ln(NULL,"00000123456.00000");
-	printf(ln2str(a));
+	ln a=str2ln(NULL,"111120");
+
+	ln_adjustpower(a,-1);
+	printf("end=%d\n",ln_endingzeronum(a));
 	return 0;
 }

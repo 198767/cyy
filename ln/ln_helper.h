@@ -29,6 +29,15 @@ ln ln_creat(int cellnum);
 void ln_free(ln* n);
 
 /*
+ * 作用:获取10的乘方,这个功能很常用
+ * 参数:
+ *	power:乘方的指数，必须>=0
+ * 返回值:
+ * 	成功:乘方
+ * 	失败:返回-1
+ */
+int power10(int power);
+/*
  * 作用:检查函数传入的ln参数是否合法(不包含NULL)
  * 参数:
  *	n:要检查的ln
@@ -71,7 +80,7 @@ ln ln_addcell(ln n,int inc_num);
 
 
 /*
- * 作用:获取ln从lsd截止到q节点处的节点个数(包括q)
+ * 作用:获取ln整数部分从lsd节点截止到q节点处的节点个数(包括q)
  * 参数:
  *	n:要计算的ln
  *	q:截止节点
@@ -84,6 +93,17 @@ int ln_untilcellnum(ln n,cell q);
 #define ln_cellnum(n) ln_untilcellnum(n,(n)->msd) 
 
 
+/*
+ * 作用:获取ln整数部分的十进制位数
+ * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉
+ * 参数:
+ *	n:要计算的ln
+ *	q:截止节点
+ * 返回值:
+ * 	成功:返回十进制位数
+ * 	失败:返回-1
+ */
+int ln_digitnum(ln n);
 
 /*
  * 作用:复制b的值给a
@@ -108,6 +128,26 @@ ln ln_copy(ln a,ln b);
 int ln_checkstr(const char* str);
 
 /*
+ * 作用:把ln的前置0去掉,不影响ln的数值,只是方便一些操作
+ * 参数:
+ *	n:要处理的ln
+ * 返回值:
+ * 	无
+ */
+void ln_stripleadingzero(ln n);
+
+/*
+ * 作用:调整指数部分
+ * 参数:
+ *	n:要处理的ln
+ * 	inc_power:指数增量 >0 增加指数,把整数部分结尾的0去掉 <0 减少指数,增加整数部分结尾的0
+ * 返回值:
+ * 	成功:ln
+ * 	失败:返回NULL
+ */
+ln ln_adjustpower(ln n,int inc_power);
+
+/*
  * 作用:把字符串转换为ln
  * 参数:
  *	n:要赋值的ln,如果为NULL则构造一个新ln
@@ -127,4 +167,6 @@ ln str2ln(ln n,const char* str);
  * 	失败:NULL
  */
 char* ln2str(ln n);
+
+
 #endif
