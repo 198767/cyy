@@ -25,8 +25,8 @@ struct _cell //表示ln其中一个节点(一个大数位数)
 };
 //定义操作模式枚举
 typedef enum{
-	newln=0,
-	firstln=1
+	newln,
+	firstln
 }res_type;
 typedef enum{
 	trunc,

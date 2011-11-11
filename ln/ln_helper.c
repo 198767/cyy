@@ -1,6 +1,5 @@
 /*
  *	该库里面包含ln的构造及释放的函数，以及转换函数等辅助函数
- *	
  */
 #include "ln_helper.h"
 
@@ -1162,4 +1161,3 @@ void print_ln(ln n)
 	return;			
 }
 
-#endif

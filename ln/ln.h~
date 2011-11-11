@@ -10,11 +10,11 @@
 #define ISDIGIT(a)  ((a)>='0'&&(a)<='9') //字符是否数字
 #define PUT_LINE {printf("%d\n",__LINE__);fflush(stdout);}
 #define init_ln(i) ln_setval(NULL,i)
-struct _ln //正负用sign表示 表示成 cell*10^zero cell是双向循环链表
+struct _ln //正负用sign表示 表示成 cell*10^power cell是双向循环链表
 {
 	struct _cell *lsd; //最低位
 	struct _cell *msd; //最高位
-	int zero; //表示结尾的0  
+	int power; //表示指数
 	int sign; //1-正数 0-负数
 };
 struct _cell //表示ln其中一个节点(一个大数位数)
