@@ -233,7 +233,7 @@ ln ln_minus(ln a,ln b,res_type restype)
 
 /*
  * 作用:把i乘以j
- * 副作用:调用ln_stripleadingzero()消除a,b前置0并且用ln_adjustpower()调整a,b的指数
+ * 副作用:调用ln_stripleadingzero()消除i,j前置0并且用ln_stripendingzero()调整a,b的指数
  * 副作用:调用ln_stripleadingzero()消除结果的前置0
  * 参数:
  *	a,b:要相减的ln
@@ -328,7 +328,7 @@ ln ln_multiply(ln i,ln j,res_type restype)
 
 /*
  * 作用:把ln a乘以int b
- * 副作用:调用ln_stripleadingzero()消除a前置0并且用ln_adjustpower()调整a的指数
+ * 副作用:调用ln_stripleadingzero()消除a前置0并且用ln_stripendingzero()调整a的指数
  * 副作用:调用ln_stripleadingzero()消除结果的前置0
  * 参数:
  * 	a:待相乘的ln
@@ -376,9 +376,246 @@ ln ln_multiply_int(ln a,int b,res_type restype)
 
 
 /*
- * 大数和整数相除
+ * 作用:把ln a除以int b
+ * 副作用:调用ln_stripleadingzero()消除a前置0并且用ln_adjustpower()调整a的指数
+ * 副作用:调用ln_stripleadingzero()消除结果的前置0
+ * 参数:
+ * 	a:除数
+ * 	b:被除数
+ *	restype:结果存放方式
+ * 返回值:
+ * 	成功:返回相加结果
+ * 	失败:NULL
  */
-ln ln_divide_num(ln i,int b,int precision,Divide_mode mode,res_type restype)
+ln ln_divide_int(ln a,int b,int precision,Divide_mode mode,res_type restype)
+{
+	int res=0;
+	int carry=0;
+	int prec=0;
+	ln c;
+	cell x,y,z;
+
+	//验证参数
+	if(ln_checknull(a)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+	
+	//除数不能为0
+	if(b==0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: b=0\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+
+	//去除前置0
+	ln_stripleadingzero(a);
+
+	//特殊的除数
+	if(b==1 || b==-1)
+	{
+		c=ln_multiply_num(a,b,restype);
+		if(c==NULL)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: ln_multiply_num fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
+		}
+		return c;
+	}
+	
+	//没指定商的精度 那就使用默认精度
+	if(precision<0)
+		precision=DIV_PREC;
+
+	if(restype==newln)
+	{
+		c=ln_creat(ln_cellnum(a));
+		if(c==NULL)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: ln_creat fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
+		}
+		c->msd=c->lsd->lcell;
+	}
+	else
+		c=a;
+	//确定指数
+	c->power=a->power;
+
+	//确定符号
+	if(b>0)
+		c->sign=a->sign;
+	else
+	{
+		c->sign=-a->sign;
+		b=-b;
+	}
+
+
+	x=a->msd;
+
+		i->msd=a;
+		k->msd=k->lsd->ld;
+		cell c=k->msd;
+		res=a->num;
+		while(1)
+		{
+			res=res+carry*UNIT;
+			c->num=res/b;
+			carry=res%b;
+			if(k->power<0)
+			{
+				if(prec==0)
+				{
+					if(c->num !=0) //开始计算小数点个数
+						prec=-k->power;
+				}
+				else
+					prec+=DIGIT_NUM;
+			}
+			if(a==i->lsd)
+			{
+				if(carry==0) //除得尽
+				{
+					k->lsd=c;
+					break;
+				}
+				else if(prec>=precision) //除不尽，四舍五入保留precision位小数
+				{
+					if(prec==precision)
+					{
+						if(mode==round)
+						{
+							if(a !=i->lsd)
+								res=(a->ld->num+carry*UNIT)/b;
+							else
+								res=(carry*UNIT)/b;
+							if(res>=UNIT/2)
+								c->num++;
+						}
+					}
+					else
+					{
+						int l,j=1;
+						for(l=0;l<prec-precision;l++)
+							j*=10;
+						res=c->num%j;
+						if(mode==round && res>=5*(j/10))
+							c->num=c->num-res+j;
+						else
+							c->num=c->num-res;
+					}
+					k->lsd=c;
+					break;
+				}
+			}
+			if(a !=i->lsd)
+			{
+				a=a->ld;
+				res=a->num;
+			}
+			else
+			{
+				res=0;
+				k->power-=DIGIT_NUM;
+			}
+			if(c==k->lsd)
+			{
+				ln_addsize(k,5);
+				k->lsd=k->msd->hcell;
+			}
+			c=c->ld;
+		}
+		return k;
+	}
+	else
+	{
+		if(b<0)
+		{
+			i->sign=!(i->sign);
+			b=-b;
+		}
+		cell a=i->msd;
+		while(a != i->lsd && a->num==0)
+			a=a->ld;
+		cell c=i->lsd->ld;
+		cell d=i->lsd;
+		i->msd=c;
+		res=a->num;
+		while(1)
+		{
+			res=res+carry*UNIT;
+			c->num=res/b;
+			carry=res%b;
+			if(i->power<0)
+			{
+				if(prec==0)
+				{
+					if(c->num !=0) //开始计算小数点个数
+						prec=-i->power;
+				}
+				else
+					prec+=DIGIT_NUM;
+			}
+			if(a==d)
+			{
+				if(carry==0) //除得尽
+				{
+					i->lsd=c;
+					break;
+				}
+				else if(prec>=precision) //除不尽，四舍五入保留precision位小数
+				{
+					if(prec==precision)
+					{
+						if(mode==round)
+						{
+							if(a !=d)
+								res=(a->ld->num+carry*UNIT)/b;
+							else
+								res=(carry*UNIT)/b;
+							if(res>=UNIT/2)
+								c->num++;
+						}
+					}
+					else
+					{
+						int l,j=1;
+						for(l=0;l<prec-precision;l++)
+							j*=10;
+						res=c->num%j;
+						if(mode==round && res>=5*(j/10))
+							c->num=c->num-res+j;
+						else
+							c->num=c->num-res;
+					}
+					i->lsd=c;
+					break;
+				}
+			}
+			if(a!=d)
+			{
+				a=a->ld;
+				res=a->num;
+			}
+			else
+			{
+				res=0;
+				i->power-=DIGIT_NUM;
+			}
+			if(c==i->lsd)
+			{
+				ln_addsize(i,5);
+				i->lsd=i->msd->hcell;
+			}
+			c=c->ld;
+		}
+		return i;
+	}
+}
+#ifdef dsa
+ln ln_divide_int(ln i,int b,int precision,Divide_mode mode,res_type restype)
 {
 	int res=0;
 	int carry=0;
@@ -577,7 +814,6 @@ ln ln_divide_num(ln i,int b,int precision,Divide_mode mode,res_type restype)
 
 
 
-#ifdef dsa
 
 
 
