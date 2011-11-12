@@ -31,8 +31,8 @@ typedef enum{
 	firstln
 }res_type;
 typedef enum{
-	trunc_res, //截断
-	round_res  //四舍五入
+	trunc_res,
+	round_res
 }divide_mode;
 typedef struct _ln* ln;
 typedef struct _cell* cell;

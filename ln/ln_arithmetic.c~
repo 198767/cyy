@@ -475,9 +475,7 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 				inc_prec+=DIGIT_NUM;
 		}
 
-
 		printf("inc_prec=%d\n",inc_prec);
-		printf("z->num=%d\n",z->num);
 		if(inc_prec>precision) //已经达到需要的精度
 		{
 			/*
