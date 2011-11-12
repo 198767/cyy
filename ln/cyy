@@ -1,0 +1,284 @@
+ln_helper.c: (in function ln_creat)
+ln_helper.c:37:12: Null storage n->lsd derivable from parameter ln_free (&n)
+  A possibly null pointer is reachable from a parameter or global variable that
+  is not declared using a /*@null@*/ annotation. (Use -nullstate to inhibit
+  warning)
+   ln_helper.c:26:9: Storage n->lsd becomes null
+ln_helper.c:37:12: Null storage n->msd derivable from parameter ln_free (&n)
+   ln_helper.c:27:9: Storage n->msd becomes null
+ln_helper.c:38:16: Fresh storage n not released before return
+  A memory leak has been detected. Storage allocated locally is not released
+  before the last reference to it is lost. (Use -mustfreefresh to inhibit
+  warning)
+   ln_helper.c:19:42: Fresh storage n created
+ln_helper.c:44:4: Kept storage p assigned to implicitly only: p->hcell = p
+  storage is transferred to a non-temporary reference after being passed as
+  keep parameter. The storage may be released or new aliases created. (Use
+  -kepttrans to inhibit warning)
+   ln_helper.c:43:4: Storage p becomes kept
+ln_helper.c:45:4: Kept storage p assigned to implicitly only: p->lcell = p
+   ln_helper.c:43:4: Storage p becomes kept
+ln_helper.c:52:4: Kept storage p assigned to implicitly only: n->lsd->lcell = p
+   ln_helper.c:51:4: Storage p becomes kept
+ln_helper.c:53:4: Kept storage p assigned to implicitly only: n->lsd = p
+   ln_helper.c:51:4: Storage p becomes kept
+ln_helper.c:57:9: Storage n->lsd reachable from return value is kept (should be
+                     implicitly only)
+  Storage derivable from a parameter does not match the alias kind expected for
+  the formal parameter. (Use -compmempass to inhibit warning)
+   ln_helper.c:56:2: Storage n->lsd becomes kept
+ln_helper.c:57:9: Possibly null storage n->lsd derivable from return value: n
+  Function returns a possibly null pointer, but is not declared using
+  /*@null@*/ annotation of result.  If function may return NULL, add /*@null@*/
+  annotation to the return value declaration. (Use -nullret to inhibit warning)
+   ln_helper.c:26:9: Storage n->lsd may become null
+ln_helper.c:57:9: Returned storage *(n->lsd) contains 3 undefined fields:
+                     num, lcell, hcell
+  Storage derivable from a parameter, return value or global is not defined.
+  Use /*@out@*/ to denote passed or returned storage which need not be defined.
+  (Use -compdef to inhibit warning)
+ln_helper.c:57:9: Possibly null storage n->msd derivable from return value: n
+   ln_helper.c:56:9: Storage n->msd may become null
+ln_helper.c: (in function ln_free)
+ln_helper.c:89:9: Only storage p->lcell->lcell (type struct _cell *) derived
+    from released storage is not released (memory leak): p->lcell
+  A storage leak due to incomplete deallocation of a structure or deep pointer
+  is suspected. Unshared storage that is reachable from a reference that is
+  being deallocated has not yet been deallocated. Splint assumes when an object
+  is passed as an out only void pointer that the outer object will be
+  deallocated, but the inner objects will not. (Use -compdestroy to inhibit
+  warning)
+ln_helper.c:89:9: Only storage p->lcell->hcell (type struct _cell *) derived
+    from released storage is not released (memory leak): p->lcell
+ln_helper.c:90:3: Storage p->lcell is released in one path, but live in
+                     another.
+  The state of a variable is different depending on which branch is taken. This
+  means no annotation can sensibly be applied to the storage. (Use -branchstate
+  to inhibit warning)
+   ln_helper.c:89:9: Storage p->lcell released
+ln_helper.c:93:7: Unqualified storage *n passed as only param: free (*n)
+  Unqualified storage is transferred in an inconsistent way. (Use
+  -unqualifiedtrans to inhibit warning)
+ln_helper.c:95:9: Function returns with null storage derivable from parameter
+                     *n
+   ln_helper.c:94:5: Storage *n becomes null
+ln_helper.c: (in function ln_setval)
+ln_helper.c:214:11: Null storage returned as non-null: NULL
+ln_helper.c:226:8: Test expression for while not boolean, type int: 1
+  Test expression type is not boolean or int. (Use -predboolint to inhibit
+  warning)
+ln_helper.c:237:13: Null storage returned as non-null: NULL
+ln_helper.c:244:4: Implicitly only storage n->msd (type struct _cell *) not
+                      released before assignment (p aliases n->lsd): n->msd = p
+  A memory leak has been detected. Only-qualified storage is not released
+  before the last reference to it is lost. (Use -mustfreeonly to inhibit
+  warning)
+ln_helper.c:248:9: Implicitly temp storage n returned as implicitly only: n
+  Temp storage (associated with a formal parameter) is transferred to a
+  non-temporary reference. The storage may be released or new aliases created.
+  (Use -temptrans to inhibit warning)
+ln_helper.c: (in function ln_addcell)
+ln_helper.c:264:77: Return value (type int) ignored: fflush(stdout)
+  Result returned by function call is not used. If this is intended, can cast
+  result to (void) to eliminate message. (Use -retvalint to inhibit warning)
+ln_helper.c:269:10: Null storage returned as non-null: NULL
+ln_helper.c:271:77: Return value (type int) ignored: fflush(stdout)
+ln_helper.c:275:10: Null storage returned as non-null: NULL
+ln_helper.c:278:77: Return value (type int) ignored: fflush(stdout)
+ln_helper.c:280:8: Test expression for while not boolean, type int: inc_num
+ln_helper.c:282:77: Return value (type int) ignored: fflush(stdout)
+ln_helper.c:287:11: Null storage returned as non-null: NULL
+ln_helper.c:292:3: Kept storage p assigned to implicitly only:
+                      n->lsd->lcell = p
+   ln_helper.c:291:3: Storage p becomes kept
+ln_helper.c:295:2: Storage n->lsd is kept in one path, but live in another.
+   ln_helper.c:289:3: Storage n->lsd becomes kept
+ln_helper.c:295:2: Clauses exit with n->lsd referencing kept storage in while
+                      body, implicitly only storage if loop is not taken
+   ln_helper.c:289:3: Storage n->lsd becomes kept
+ln_helper.c:296:9: Implicitly temp storage n returned as implicitly only: n
+ln_helper.c:296:9: Returned storage *n contains 1 undefined field: lsd
+ln_helper.c: (in function ln_copy)
+ln_helper.c:395:10: Null storage returned as non-null: NULL
+ln_helper.c:402:10: Null storage returned as non-null: NULL
+ln_helper.c:411:11: Null storage returned as non-null: NULL
+ln_helper.c:419:11: Null storage returned as non-null: NULL
+ln_helper.c:426:11: Null storage returned as non-null: NULL
+ln_helper.c:434:12: Null storage returned as non-null: NULL
+ln_helper.c:449:2: Implicitly only storage a->msd (type struct _cell *) not
+                      released before assignment: a->msd = p->lcell
+ln_helper.c:450:9: Implicitly temp storage a returned as implicitly only: a
+ln_helper.c:450:9: Storage a->lsd->lcell reachable from return value is kept
+                      (should be implicitly only)
+   ln_helper.c:449:2: Storage a->lsd->lcell becomes kept
+ln_helper.c: (in function ln_cmp)
+ln_helper.c:511:3: Return value (type ln) ignored: ln_adjustpower(a...
+  Result returned by function call is not used. If this is intended, can cast
+  result to (void) to eliminate message. (Use -retvalother to inhibit warning)
+ln_helper.c:513:3: Return value (type ln) ignored: ln_adjustpower(b...
+ln_helper.c:518:8: Test expression for while not boolean, type int: 1
+ln_helper.c: (in function ln_cmp_int)
+ln_helper.c:607:14: Null storage passed as non-null param:
+                       ln_setval (NULL, ...)
+  A possibly null pointer is passed as a parameter corresponding to a formal
+  parameter with no /*@null@*/ annotation.  If NULL may be used for this
+  parameter, add a /*@null@*/ annotation to the function parameter declaration.
+  (Use -nullpass to inhibit warning)
+ln_helper.c:615:13: Fresh storage c not released before return
+   ln_helper.c:607:2: Fresh storage c created
+ln_helper.c: (in function ln_checkstr)
+ln_helper.c:643:8: Test expression for while not boolean, type char: *str
+  Test expression type is not boolean. (Use -predboolothers to inhibit warning)
+ln_helper.c: (in function ln_stripleadingzero)
+ln_helper.c:692:9: Storage n->msd reachable from parameter is kept (should be
+                      implicitly only)
+   ln_helper.c:691:2: Storage n->msd becomes kept
+ln_helper.c: (in function ln_endingzeronum)
+ln_helper.c:721:8: Test expression for while not boolean, type int: 1
+ln_helper.c:737:9: Unreachable code: return i
+  This code will never be reached on any possible execution. (Use -unreachable
+  to inhibit warning)
+ln_helper.c: (in function ln_adjustpower)
+ln_helper.c:760:10: Null storage returned as non-null: NULL
+ln_helper.c:768:10: Implicitly temp storage n returned as implicitly only: n
+ln_helper.c:772:10: Implicitly temp storage n returned as implicitly only: n
+ln_helper.c:785:9: Test expression for while not boolean, type int: 1
+ln_helper.c:796:80: Return value (type int) ignored: fflush(stdout)
+ln_helper.c:800:15: Null storage returned as non-null: NULL
+ln_helper.c:804:6: Implicitly only storage n->msd (type struct _cell *) not
+                      released before assignment: n->msd = p->hcell
+ln_helper.c:805:5: Storage n->lsd->hcell is kept in one path, but live in
+                      another.
+   ln_helper.c:804:6: Storage n->lsd->hcell becomes kept
+ln_helper.c:805:5: Clauses exit with p->hcell referencing kept storage in true
+                      branch, implicitly only storage in continuation
+   ln_helper.c:804:6: Storage p->hcell becomes kept
+ln_helper.c:825:13: Null storage returned as non-null: NULL
+ln_helper.c:830:3: Clauses exit with p referencing implicitly only storage in
+                      while body, local storage if loop is not taken
+   ln_helper.c:816:5: Storage p becomes implicitly only (through alias n->lsd)
+ln_helper.c:830:3: Storage p->lcell is kept in one path, but live in another.
+   ln_helper.c:816:5: Storage p->lcell becomes kept
+ln_helper.c:839:11: Null storage returned as non-null: NULL
+ln_helper.c:845:11: Null storage returned as non-null: NULL
+ln_helper.c:861:11: Implicitly temp storage n returned as implicitly only: n
+ln_helper.c:861:11: Storage n->lsd reachable from return value is kept (should
+                       be implicitly only)
+   ln_helper.c:857:3: Storage n->lsd becomes kept
+ln_helper.c:867:9: Test expression for while not boolean, type int: 1
+ln_helper.c:878:2: Clauses exit with n->lsd referencing implicitly only storage
+                      in true branch, kept storage in false branch
+   ln_helper.c:857:3: Storage n->lsd becomes kept
+ln_helper.c:878:2: Storage n->lsd is kept in one path, but live in another.
+   ln_helper.c:857:3: Storage n->lsd becomes kept
+ln_helper.c:879:9: Implicitly temp storage n returned as implicitly only: n
+ln_helper.c:879:9: Storage n->lsd reachable from return value is unqualified
+                      (should be implicitly only)
+   ln_helper.c:857:3: Storage n->lsd becomes kept
+ln_helper.c: (in function str2ln)
+ln_helper.c:904:11: Null storage returned as non-null: NULL
+ln_helper.c:912:11: Null storage returned as non-null: NULL
+ln_helper.c:920:10: Null storage returned as non-null: NULL
+ln_helper.c:985:12: Incompatible types for * (char, int):
+                       (*lastdigit - '0') * i
+  To make char and int types equivalent, use +charint.
+ln_helper.c:997:15: Null storage returned as non-null: NULL
+ln_helper.c:1012:2: Implicitly only storage n->msd (type struct _cell *) not
+    released before assignment (p aliases n->lsd): n->msd = p
+ln_helper.c:1013:9: Implicitly temp storage n returned as implicitly only: n
+ln_helper.c:1013:9: Storage n->lsd reachable from return value is kept (should
+                       be implicitly only)
+   ln_helper.c:1012:2: Storage n->lsd becomes kept
+ln_helper.c: (in function ln2str)
+ln_helper.c:1027:13: Variable errno shadows outer declaration
+  An outer declaration is shadowed by the local declaration. (Use -shadow to
+  inhibit warning)
+   ln.h:41:12: Previous declaration of errno: int
+ln_helper.c:1027:19: Declaration using extern inside function scope: int errno
+  An extern declaration is used inside a function scope. (Use -nestedextern to
+  inhibit warning)
+ln_helper.c:1040:10: Null storage returned as non-null: NULL
+ln_helper.c:1049:10: Null storage returned as non-null: NULL
+ln_helper.c:1056:10: Null storage returned as non-null: NULL
+ln_helper.c:1062:7: Unrecognized identifier: strdup
+  Identifier used in code has not been declared. (Use -unrecog to inhibit
+  warning)
+ln_helper.c:1066:11: Null storage returned as non-null: NULL
+ln_helper.c:1076:21: Function malloc expects arg 1 to be size_t gets int:
+                        cellnum * 4 + n->power + 10
+  To allow arbitrary integral types to match any integral type, use
+  +matchanyintegral.
+ln_helper.c:1080:11: Null storage returned as non-null: NULL
+ln_helper.c:1091:9: Test expression for while not boolean, type int: i
+ln_helper.c:1095:9: Incompatible types for + (int, char):
+                       (a->num / i) % 10 + '0'
+  A character constant is used as an int. Use +charintliteral to allow
+  character constants to be used as ints.  (This is safe since the actual type
+  of a char constant is int.)
+ln_helper.c:1103:10: Test expression for while not boolean, type int: i
+ln_helper.c:1105:10: Incompatible types for + (int, char):
+                        (a->num / i) % 10 + '0'
+ln_helper.c:1120:11: Null storage returned as non-null: NULL
+ln_helper.c:1133:21: Function malloc expects arg 1 to be size_t gets int: size
+ln_helper.c:1137:11: Null storage returned as non-null: NULL
+ln_helper.c:1146:9: Incompatible types for + (int, char):
+                       (a->num / i) % 10 + '0'
+ln_helper.c:1162:9: Incompatible types for + (int, char):
+                       (a->num / i) % 10 + '0'
+ln_helper.c:1179:6: Value *p used before definition
+  An rvalue is used that may not be initialized to a value on some execution
+  path. (Use -usedef to inhibit warning)
+ln_helper.c:1183:2: Variable str is dependent in true branch, but independent
+                       in false branch.
+   ln_helper.c:1183:2: in true branch:
+   ln_helper.c:1083:3: Storage str becomes dependent
+   ln_helper.c:1183:2: in false branch:
+   ln_helper.c:1133:3: Fresh storage str created
+ln_helper.c:1183:2: Variable p is dependent in false branch, but independent in
+                       true branch.
+   ln_helper.c:1183:2: in false branch:
+   ln_helper.c:1139:3: Storage p becomes dependent
+   ln_helper.c:1183:2: in true branch:
+   ln_helper.c:1083:3: Storage p becomes owned
+ln_helper.c: (in function ln_output)
+ln_helper.c:1203:2: Return value (type int) ignored: puts(p)
+ln_helper.h:20:14: Function exported but not used outside ln_helper: ln_creat
+  A declaration is exported, but not used outside this module. Declaration can
+  use static qualifier. (Use -exportlocal to inhibit warning)
+   ln_helper.c:58:1: Definition of ln_creat
+ln_helper.h:29:6: Function exported but not used outside ln_helper: ln_free
+   ln_helper.c:96:1: Definition of ln_free
+ln_helper.h:39:5: Function exported but not used outside ln_helper: power10
+   ln_helper.c:126:1: Definition of power10
+ln_helper.h:48:5: Function exported but not used outside ln_helper:
+                     ln_checknull
+   ln_helper.c:162:1: Definition of ln_checknull
+ln_helper.h:68:4: Function exported but not used outside ln_helper: ln_setval
+   ln_helper.c:249:1: Definition of ln_setval
+ln_helper.h:80:4: Function exported but not used outside ln_helper: ln_addcell
+   ln_helper.c:297:1: Definition of ln_addcell
+ln_helper.h:92:5: Function exported but not used outside ln_helper:
+                     ln_untilcellnum
+   ln_helper.c:328:1: Definition of ln_untilcellnum
+ln_helper.h:107:5: Function exported but not used outside ln_helper:
+                      ln_digitnum
+   ln_helper.c:374:1: Definition of ln_digitnum
+ln_helper.h:131:5: Function exported but not used outside ln_helper: ln_cmp
+   ln_helper.c:542:1: Definition of ln_cmp
+ln_helper.h:158:5: Function exported but not used outside ln_helper: ln_cmp_int
+   ln_helper.c:616:1: Definition of ln_cmp_int
+ln_helper.h:168:5: Function exported but not used outside ln_helper:
+                      ln_checkstr
+   ln_helper.c:671:1: Definition of ln_checkstr
+ln_helper.h:177:6: Function exported but not used outside ln_helper:
+                      ln_stripleadingzero
+   ln_helper.c:693:1: Definition of ln_stripleadingzero
+ln_helper.h:188:5: Function exported but not used outside ln_helper:
+                      ln_endingzeronum
+   ln_helper.c:738:1: Definition of ln_endingzeronum
+ln_helper.h:199:4: Function exported but not used outside ln_helper:
+                      ln_adjustpower
+   ln_helper.c:880:1: Definition of ln_adjustpower
+ln_helper.h:221:7: Function exported but not used outside ln_helper: ln2str
+   ln_helper.c:1185:1: Definition of ln2str
+

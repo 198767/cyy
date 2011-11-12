@@ -37,8 +37,6 @@ typedef enum{
 typedef struct _ln* ln;
 typedef struct _cell* cell;
 
-//导入errno
-extern int errno;
 /*
 //除法
 lN ln_divide_num(lN i,int b,int precision,Divide_mode mode,Res resflag);

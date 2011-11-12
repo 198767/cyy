@@ -70,5 +70,5 @@ ln ln_multiply(ln i,ln j,res_type restype);
  * 	成功:返回相加结果
  * 	失败:NULL
  */
-ln ln_multiply_int(ln a,int b,res_type restype);
+ln ln_multiply_num(ln a,int b,res_type restype);
 #endif

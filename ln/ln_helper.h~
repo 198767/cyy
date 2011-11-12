@@ -176,15 +176,6 @@ int ln_checkstr(const char* str);
 void ln_stripleadingzero(ln n);
 
 /*
- * 作用:把ln的后置0节点去掉,增加指数
- * 参数:
- *	n:要处理的ln
- * 返回值:
- * 	无
- */
-void ln_stripendingzero(ln n);
-
-/*
  * 作用:获取ln的整数部分的结尾0的个数
  * 副作用:使用ln_stripleadingzero()把ln整数部分前置0去掉
  * 参数:

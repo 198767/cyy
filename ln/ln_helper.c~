@@ -4,7 +4,7 @@
 #include "ln_helper.h"
 
 /*
- * 作用:创建ln,初始节点值为0
+ * 作用:创建ln
  * 参数:
  * 	cellnum:ln的初始节点数
  * 返回值:
