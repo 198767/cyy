@@ -216,7 +216,7 @@ int ln_endingzeronum(ln n);
  * 	成功:返回ln
  * 	失败:NULL
  */
-ln ln_fix(ln n,int precision,divide_mode mode);
+ln ln_fix(ln n,int precision,divide_mode mode)
 
 /*
  * 作用:把ln的有效节点的num转负

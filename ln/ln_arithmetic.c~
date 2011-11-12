@@ -115,7 +115,6 @@ ln ln_add(ln a,ln b,res_type restype)
 			ln_setval(c,0);
 			return c;
 		}
-		printf("cmp_res=%d\n",cmp_res);
 		//确定符号
 		if(cmp_res==1)
 		{
@@ -404,6 +403,12 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		return NULL;
 	}
 
+	//精度参数有误
+	if(precision<0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: precision error\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
 	//除数不能为0
 	if(b==0)
 	{
@@ -413,18 +418,8 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 
 	//去除前置0
 	ln_stripleadingzero(a);
-
-	//特殊的除数
-	if(b==1 || b==-1)
-	{
-		c=ln_multiply_int(a,b,restype);
-		if(c==NULL)
-		{
-			fprintf(stderr,"[%s %d] %s error,reason: ln_multiply_num fail\n",__FILE__,__LINE__,__FUNCTION__);
-			return NULL;
-		}
-		return c;
-	}
+	//去除后置0
+	ln_adjustpower(a,ln_endingzeronum(a));
 
 	//没指定商的精度 那就使用默认精度
 	if(precision<0)
@@ -442,8 +437,6 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 	}
 	else
 		c=a;
-	//确定指数
-	c->power=a->power;
 
 	//确定符号
 	if(b>0)
@@ -456,7 +449,8 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 	}
 
 	carry=0;
-	inc_prec=0;
+	ln_output(a);
+	inc_prec=ln_pointnum(a,a->msd)-DIGIT_NUM;
 	x=a->msd;
 	z=c->msd;
 	res=x->num;
@@ -465,56 +459,14 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		res+=carry*UNIT;
 		z->num=res/b;
 		carry=res%b;
+		//开始计算当前精度
+		inc_prec+=DIGIT_NUM;
 
-		if(c->power<0) //计算精度
-		{
-			//开始计算当前精度
-			if(inc_prec==0)
-				inc_prec=-c->power;
-			else
-				inc_prec+=DIGIT_NUM;
-		}
-
-		printf("inc_prec=%d\n",inc_prec);
 		if(inc_prec>precision) //已经达到需要的精度
 		{
-			/*
-			   if(mode==round)
-			   {
-			   while(inc_prec>precision && inc_precDIGIT_NUM)
-			   {
-			   c=c->hcell;
-			   inc_prec-=DIGIT_NUM;
-			   }
-			//计算下一次结果
-			res=(carry*UNIT)/b;
-			if(res>=UNIT/2)
-			c->num++;
-			}
-
-
-
-			if(inc_prec==precision)
-			{
-			}
-			else
-			{
-			while(inc_prec-precision>=DIGIT_NUM)
-			{
-			c=c->hcell;
-			inc_prec-=DIGIT_NUM;
-			}
-			int l,j=1;
-			for(l=0;l<inc_prec-precision;l++)
-			j*=10;
-			res=c->num%power10(inc_prec-precision);
-			if(mode==round && res>=5*(j/10))
-			c->num=c->num-res+j;
-			else
-			c->num=c->num-res;
-			}
-			*/
 			c->lsd=z;
+			//确定指数
+			c->power=-inc_prec;
 			break;
 		}
 
@@ -545,6 +497,10 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		}
 		z=z->lcell;
 	}
+
+	ln_output(c);
+	//获取精度
+	ln_fix(c,precision,mode);
 	return c;
 }
 
@@ -965,7 +921,6 @@ ln ln_divide_ln(ln i,ln j)//,int precision,Divide_mode mode),res_type restype)
 			z->num=(x->num+x->hcell->num*UNIT)/y->num; //求出z位数
 		else
 			z->num=x->num/y->num; //求出z位数
-		printf("before z->num=%d\n",z->num);
 		if(z->num !=0)
 		{
 			b->sign=-1; //b变成负数
@@ -986,7 +941,6 @@ ln ln_divide_ln(ln i,ln j)//,int precision,Divide_mode mode),res_type restype)
 			}
 		}
 
-		printf("after z->num=%d\n",z->num);
 		c->lsd=z;
 		if(flag==1)
 			zero-=DIGIT_NUM;

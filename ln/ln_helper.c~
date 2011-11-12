@@ -261,21 +261,25 @@ ln ln_addcell(ln n,int inc_num)
 {
 	cell p;
 
+			PUT_LINE;
 	//验证参数
 	if(ln_checknull(n) !=0)
 	{
 		fprintf(stderr,"[%s %d] %s error,reason:ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
+			PUT_LINE;
 	if(inc_num<=0) //无须增加,非法参数
 	{
 		fprintf(stderr,"[%s %d] %s error,reason:inc_num<=0\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
 
+			PUT_LINE;
 	//开始增加节点
 	while(inc_num)
 	{
+			PUT_LINE;
 		p=(cell)malloc(sizeof(struct _cell));
 		if(!p)
 		{
@@ -889,7 +893,10 @@ ln ln_fix(ln n,int precision,divide_mode mode)
 			else
 			{
 				if(p->num%power>=5*power/10)
+				{
+					PUT_LINE;
 					p->num=(p->num/power+1)*power;
+				}
 				else
 					p->num-=p->num%power;
 			}
@@ -906,6 +913,7 @@ ln ln_fix(ln n,int precision,divide_mode mode)
 		}
 	}
 	//有可能四舍五入导致溢出,需要做调整
+	PUT_LINE;
 	p=n->lsd;
 	while(1)
 	{
@@ -1018,6 +1026,7 @@ ln ln_adjustpower(ln n,int inc_power)
 				{
 					if(n->lsd->lcell ==n->msd) //节点不够
 					{
+						PUT_LINE;
 						if(ln_addcell(n,INIT_SIZE) ==NULL) //分配失败
 						{
 							fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);

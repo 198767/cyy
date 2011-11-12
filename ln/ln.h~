@@ -31,38 +31,13 @@ typedef enum{
 	firstln
 }res_type;
 typedef enum{
-	trunc_res,
-	round_res
+	trunc_res, //截断
+	round_res  //四舍五入
 }divide_mode;
 typedef struct _ln* ln;
 typedef struct _cell* cell;
 
 //导入errno
 extern int errno;
-/*
-//除法
-lN ln_divide_num(lN i,int b,int precision,Divide_mode mode,Res resflag);
-int ln_divideable_num(const lN i,int b);
-lN ln_divide_ln(lN i,lN j);
-
-void ln_info(lN n);
-
-int ln_cmp(lN a,lN b);
-int ln_cmp_num(lN a,int b);
-//获取ln的十进制位数的和
-int ln_cellsum(lN n);
-//ln相加
-lN add_lns(lN m,lN n,Res res);
-lN minus_lns(lN a,lN b,Res resflag);
-lN ln_add_num(lN a,int b,Res resflag);
-//数乘
-lN ln_multiply_num(lN i,int b,Res resflag);
-//乘法
-lN multiply_lns(lN i,lN j,Res resflag);
-//求平方
-lN ln_square(lN a,Res resflag);
-//求幂
-lN ln_exp_int(lN i,int b,Res resflag);
- * ------------------操纵函数-----------------------*/
 
 #endif

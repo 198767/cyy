@@ -4,10 +4,10 @@
 int main(int argc, char** argv)
 {
 
-	ln a=ln_init_str("3.33333");
-	ln b=ln_init_str("-100");
-	ln_divide_int(a,3,2,trunc_res,firstln);
+	ln a=ln_init_str("9999.989");
+	ln_divide_int(a,3,2,round_res,firstln);
 	puts(ln2str(a));
+
 
 	return 0;
 }
