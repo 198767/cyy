@@ -198,19 +198,31 @@ endfunction
 
 
 plugin/cyy_vimscript/settings.vim	[[[1
-10
+22
+"备份文件
+set backup
 "使用文件类型插件
 filetype plugin on
 "查找
 map <space> /
 "设置编码
 set encoding=utf8
+"递增查询
+set incsearch
+"设置页号
+set nu
+"打开文件跳转到上次阅读地方
+autocmd BufReadPost * call cursor(line("'\""),1)
+
+"映射到切换大小写
 nmap . :call Switch_case()<cr>
 
 map <F12> :echo "尚未绑定按键"<CR>
 
+"去掉X命令
+cmap X x
 plugin/cyy_vimscript/open_relate_src.vim	[[[1
-90
+77
 """""""""""""""""""""""""""""""""""""""""""""""""""
 "用法:显示当前文件相关的文件，让用户选择并且在新窗口打开
 "具体用法
@@ -221,86 +233,97 @@ plugin/cyy_vimscript/open_relate_src.vim	[[[1
 
 "搜索相关的文件
 function Find_src()
-let l:suffix=expand("%:p:e") "获取文件后缀
-let l:filelist=[]
-if(l:suffix=="c" || l:suffix=="ec") "当前文件是.ec
-"搜索模板文件
-let l:searchres=system('grep -o ''"[^"]\+htm"'' '.expand("%").' | sed -e ''s/"//g'' | sort | uniq ')
-for l:file in split(l:searchres,'\n')
-let l:file=fnamemodify(l:file,":p:t")
-let l:file=system("find /usr/local/apache/template -name '".l:file."'")
-if(l:file=="")
-let l:file=system("find /usr/local/apache/htdocs -name '".l:file."'")
-endif
-let l:filelist=l:filelist+split(l:file,'\n')
-endfor
-
-"搜索相关的ec
-let l:file=expand("%:t:r")
-let l:file=substitute(l:file,'_in$',"","")
-let l:file=substitute(l:file,'_update$',"","")
-let l:file=substitute(l:file,'\d$',"","")
-let l:searchres=system('find '.expand("%:p:h")." -regex '.*".l:file.".*ec'")
-if(l:searchres !="")
-let l:filelist=l:filelist+split(l:searchres,'\n')
-endif
-
-"搜索有调用到该cgi的模板
-let l:searchres=system('grep '.expand("%:t:r").'.cgi -R /usr/local/apache/template /usr/local/apache/htdocs/ --include="*.htm" -l | sort | uniq ')
-if(l:searchres !="")
-let l:filelist=l:filelist+split(l:searchres,'\n')
-endif
-elseif(l:suffix=="htm") "htm文件
-"搜索调用到的cgi
-let l:searchres=system(' grep ''[a-zA-Z0-9_-]\+\.cgi'' -o '.expand("%")." | sed -e 's/\\.cgi/.ec/g' | sort | uniq ")
-for l:file in split(l:searchres,'\n')
-let l:file=fnamemodify(l:file,":p:t")
-let l:file=system("find /home/public/cgisrc -name '".l:file."'")
-let l:filelist=l:filelist+split(l:file,'\n')
-endfor
-"搜索有调用到该模板的程序
-let l:searchres=system('grep '.expand("%:t").' -R /home/public/cgisrc --include="*.ec" -l | sort | uniq ')
-if(l:searchres !="")
-let l:filelist=l:filelist+split(l:searchres,'\n')
-endif
-endif
-"排序 剔除重复项 和当前文件
-let l:filelist=sort(l:filelist)
-let l:i=0
-let l:curfile=expand("%:p")
-while(l:i < len(l:filelist))
-if(l:i+1<len(l:filelist) && l:filelist[l:i]==l:filelist[l:i+1] )
-call remove(l:filelist,l:i)
-elseif(l:filelist[l:i]==l:curfile)
-call remove(l:filelist,l:i)
-else
-let l:i+=1
-endif
-endwhile
-return l:filelist
+	let suffix=expand("%:p:e") "获取文件后缀
+	let filelist=[]
+	if(suffix=="c") "当前文件是c语言
+		"本地头文件
+		let local_heads=system("grep '^ *#include\' ".expand("%")." | grep -o '\".*\"' | grep -o '[a-zA-Z0-9_]*\.h' | sort | uniq ")
+		echo type(local_heads)
+		let local_heads=substitute(local_heads,'(\s\|\n)*$',"","")
+		echo strlen(local_heads)
+		for file in split(local_heads,'\n')
+			let file=fnamemodify(local_heads,":p:t")
+			echo "find . -name '".file."'"
+			let file=system("find . -name '".file."'")
+			if(file!="")
+				let filelist=filelist+split(file,'\n')
+			endif
+		endfor
+	elseif(suffix=="htm") "htm文件
+		"搜索调用到的cgi
+		let searchres=system(' grep ''[a-zA-Z0-9_-]\+\.cgi'' -o '.expand("%")." | sed -e 's/\\.cgi/.ec/g' | sort | uniq ")
+		for file in split(searchres,'\n')
+			let file=fnamemodify(file,":p:t")
+			let file=system("find /home/public/cgisrc -name '".file."'")
+			let filelist=filelist+split(file,'\n')
+		endfor
+		"搜索有调用到该模板的程序
+		let searchres=system('grep '.expand("%:t").' -R /home/public/cgisrc --include="*.ec" -l | sort | uniq ')
+		if(searchres !="")
+			let filelist=filelist+split(searchres,'\n')
+		endif
+	endif
+	"排序 剔除重复项 和当前文件
+	let filelist=sort(filelist)
+	let i=0
+	let curfile=expand("%:p")
+	while(i < len(filelist))
+		if(i+1<len(filelist) && filelist[i]==filelist[i+1] )
+			call remove(filelist,i)
+		elseif(filelist[i]==curfile)
+			call remove(filelist,i)
+		else
+			let i+=1
+		endif
+	endwhile
+	return filelist
 endfunction
 
 
 
 "打开文件
 function Split_src()
-let l:filelist=Find_src()
-let l:len=len(l:filelist)
-let l:index=0
-if(l:len==0)
-echohl WarningMsg | echo "找不到相关文件" | echohl None
-return
-elseif(l:len>1)
-let l:index=Show_options("以下文件跟本文件有关，请选择一个打开",l:filelist)
-if(l:index==-1)
-return
-endif
-endif
-let srcname=l:filelist[l:index]
-exec 'sp '.srcname
+	let filelist=Find_src()
+	let len=len(filelist)
+	let index=0
+	if(len==0)
+		echohl WarningMsg | echo "找不到相关文件" | echohl None
+		return
+	elseif(len>1)
+		let index=Show_options("以下文件跟本文件有关，请选择一个打开",filelist)
+		if(index==-1)
+			return
+		endif
+	endif
+	let srcname=filelist[index]
+	exec 'sp '.srcname
 endfunction
 
 
+plugin/cyy_vimscript/temp_map.vim	[[[1
+22
+"常用的键映射
+let s:subentrys=[ '执行下面全部键映射', {'替换行': 'map b pkddyy=='}]
+function Temp_map()
+	let l:index=Show_options("请选择以下键映射",s:subentrys)
+	if(l:index==-1)
+	return
+	endif
+	if(l:index !=0)
+	let l:entry=s:subentrys[l:index]
+	for l:key in keys(l:entry)
+	exec l:entry[l:key]
+	endfor
+	else
+	let l:subentrys=copy(s:subentrys)
+	call remove(l:subentrys,0)
+	for l:entry in l:subentrys
+	for l:key in keys(l:entry)
+	exec l:entry[l:key]
+	endfor
+	endfor
+	endif
+	endfunction
 plugin/cyy_vimscript/run_make.vim	[[[1
 38
 """"""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -794,74 +817,38 @@ else
  return tag
  endfunction
 plugin/cyy_vimscript/substitute.vim	[[[1
-43
+31
 let s:subentrys=['执行下面全部替换']
-let s:subentrys+=[{ '消除disp_message': '%s/sprintf(disp_message,\(.*\)\n\s*\(\(error\)\|\(succ\)\)_disp(disp_message);.*\n\(\s*return\>.*\)/\2_disp(\1\r\5/g| %s/strcpy(disp_message,\(.*\)\n\s*\(\(error\)\|\(succ\)\)_disp(disp_message);.*\n\(\s*return\>.*\)/\2_disp(\1\r\5/g ' }]
-let s:subentrys+=[{"处理field_check" : 'g/struct\s\+field_check/s/\[[0-9]\+\]/[]/'}]
-let s:subentrys+=[{"处理check_assgin_comm": 'g/check_assgin_comm/s/&(\(.*\)\[0\]),[0-9]\+/\1,arry_len(\1)/'}]
-let s:subentrys+=[{"消除tpl_set_field": 'g/tpl_set_field(/s/tpl_set_field\s*(\s*tpl\s*,\s*\("[^"]\+"\)\s*,\([^,]\+\),[^;]\+;/tpl_set_field_char(tpl,\1,\2);/g'}]
-let s:subentrys+=[{"替换tpl_http_write": 'g/tpl_http_write/s/1/STDOUT_FILENO/'}]
-let s:subentrys+=[{"修改main" : '/^int\s\+main\s*(\s*argc\s*,\s*argv\s*)\s*/,/argv;/s/.*/int main(int argc,char **argv)/g | %s/\(int main(int argc,char \*\*argv)\n\)\+/\1/g'}]
-let s:subentrys+=[{"倒入模板" : "%s/倒入模板/导入模板/g"}]
-let s:subentrys+=[{"返回值": "%s/return[ (]*-1[ )]*;/return FAIL;/g"}]
-let s:subentrys+=[{"返回值": "%s/return[ (]*0[ )]*;/return SUCC;/g"}]
-let s:subentrys+=[{"清除parameter" : 'g/parameter/s/\(EXEC SQL BEGIN DECLARE SECTION;\)\|\(EXEC SQL END DECLARE SECTION;\)\|\(\<parameter \)//g'}]
-let s:subentrys+=[{"替换agenttype": '%s/domainreg\.agenttype\([ !=]\+\)\<1\>/domainreg\.agenttype\1domain_agenttype_nsi'}]
-let s:subentrys+=[{"替换agenttype": '%s/domainreg\.agenttype\([ !=]\+\)\<13\>/domainreg\.agenttype\1domain_agenttype_icann'}]
-let s:subentrys+=[{"替换agenttype": '%s/domainreg\.agenttype\([ !=]\+\)\<3\>/domainreg\.agenttype\1domain_agenttype_webcc'}]
-let s:subentrys+=[{"替换agenttype": '%s/domainreg\.agenttype\([ !=]\+\)\<1\>/domainreg\.agenttype\1domain_agenttype_nsi'}]
-let s:subentrys+=[{"替换agenttype": '%s/domainreg\.agenttype\([ !=]\+\)\<0\>/domainreg\.agenttype\1domain_agenttype_china_channel'}]
-let s:subentrys+=[{"替换sqlcode": '%s/\<sqlcode\>\([ !=]\+\)\<100\>/sqlcode\1NOTEXIST/g'}]
-let s:subentrys+=[{"消除trans_back": '%s/trans_back(NOTDISPLAY)/trans_back_v60()/g'}]
-let s:subentrys+=[{"替换setblank": '%s/if\s*(strlen\s*(\s*\([a-zA-Z0-9.]\+\)\s*)\s*==\s*0\s*)\s*\n\s*strcpy\s*(\s*\1\s*,\s*" "\s*)\s*;/setblank(\1);/g '}]
-let s:subentrys+=[{"替换xml报文" : '%s/set_send_xml_int(send,"\(.*\)",\(.*\));/vect_strcat(send,"<\1>%d<\/\1>",\2);/g' }]
-let s:subentrys+=[{"替换xml报文" : '%s/set_send_xml(send,"\(.*\)",\(.*\));/vect_strcat(send,"<\1>%s<\/\1>",\2);/g' }]
+let s:subentrys+=[{'消除highestdigit': '%s/highestdigit/msd/g'}]
+let s:subentrys+=[{"处理lowstdigit" : '%s/lowestdigit/lsd/g'}]
+let s:subentrys+=[{"处理digit": '%s/Digit/cell/g'}]
+let s:subentrys+=[{"消除ln": '%s/lN/ln/g'}]
+let s:subentrys+=[{"消除struct ln": '%s/struct ln/struct _ln/g'}]
+let s:subentrys+=[{"消除struct digit": '%s/struct digit/struct _cell/g'}]
+let s:subentrys+=[{"改变creat_ln": '%s/creat_ln/ln_creat/g'}]
+let s:subentrys+=[{"改变 ->digit": '%s/->digit/->num/g'}]
 
 function Substitute_tpl()
-let l:index=Show_options("请选择以下替换",s:subentrys)
-if(l:index==-1)
-return
-endif
-
-if(l:index !=0)
-let l:entry=s:subentrys[l:index]
-for l:key in keys(l:entry)
-exec l:entry[l:key]
-endfor
-else
-let l:subentrys=copy(s:subentrys)
-call remove(l:subentrys,0)
-for l:entry in l:subentrys
-for l:key in keys(l:entry)
-exec l:entry[l:key]
-endfor
-endfor
-endif
-endfunction
-plugin/cyy_vimscript/temp_map.vim	[[[1
-22
-"常用的键映射
-let s:subentrys=[ '执行下面全部键映射', {'替换行': 'map b pkddyy=='}]
-function Temp_map()
-	let l:index=Show_options("请选择以下键映射",s:subentrys)
+	let l:index=Show_options("请选择以下替换",s:subentrys)
 	if(l:index==-1)
-	return
+		return
 	endif
+	
 	if(l:index !=0)
-	let l:entry=s:subentrys[l:index]
-	for l:key in keys(l:entry)
-	exec l:entry[l:key]
-	endfor
+		let l:entry=s:subentrys[l:index]
+		for l:key in keys(l:entry)
+			exec l:entry[l:key]
+		endfor
 	else
-	let l:subentrys=copy(s:subentrys)
-	call remove(l:subentrys,0)
-	for l:entry in l:subentrys
-	for l:key in keys(l:entry)
-	exec l:entry[l:key]
-	endfor
-	endfor
+		let l:subentrys=copy(s:subentrys)
+		call remove(l:subentrys,0)
+		for l:entry in l:subentrys
+			for l:key in keys(l:entry)
+				exec l:entry[l:key]
+			endfor
+		endfor
 	endif
-	endfunction
+endfunction
 ftplugin/vim/settings.vim	[[[1
 4
 "功能键说明
@@ -888,10 +875,24 @@ map <F5> :! jsl -conf /home/public/tools/jsl_conf -process %<CR>
 map <F9> :s/name=\(["']\)\([^\1]*\)\1/name=\1\2\1 value=\1\@\@\U\2\@\@\1/g<CR>
 
 map <F12> :echo g:Fkeys_msg<CR>
+ftplugin/c/add_include.vim	[[[1
+12
+
+function! Add_Include()
+let file_content=["#ifndef ".toupper(expand("%:r"))."_H","#define ".toupper(expand("%:r"))."_H"]
+let file_content+=getline(1,line('$'))
+let file_content+=["#endif"]
+let i=1
+for line in file_content
+call setline(i,line)
+let i=i+1
+endfor
+endfunction
+
 ftplugin/c/main.vim	[[[1
 13
 " 自动生成main函数
-function Add_Main()
+function! Add_Main()
   let main=['#include<stdio.h>',"int main(int argc, char** argv)","{","}"]
   let i=line('$')+1
   if i==2
@@ -904,12 +905,12 @@ function Add_Main()
 endfunction
 
 ftplugin/c/settings.vim	[[[1
-30
+32
 set cindent
 let s:suffix=expand("%:p:e") "获取文件后缀
 if (s:suffix=="c")
 	"功能键说明
-	let g:Fkeys_msg="F1 缩进 F2 打开相关文件 F3 打开符号定义 F4 当前目录全部编译 F5 编译当前文件 F6 增加main声明 10 常用替换 F12 帮助"
+	let g:Fkeys_msg="F1 缩进 F2 打开相关文件 F3 打开符号定义 F4 当前目录全部编译 F5 编译当前文件 F6 增加main声明 F10 常用替换 F12 帮助"
 	"从首行到末行以tab为单位缩进 速度很慢
 	map <F1> :call C_indent("\t","",1,line('$'))<CR>
 	"打开关联的模板
@@ -927,25 +928,13 @@ if (s:suffix=="c")
 	map <F12> :echo g:Fkeys_msg<CR>
 elseif (s:suffix=="h")
 	"功能键说明
-	let g:Fkeys_msg="F1 加入重复包含指令 F3 打开符号定义 F12 帮助"
+	let g:Fkeys_msg="F1 加入重复包含指令 F3 打开符号定义 F10 常用替换 F12 帮助"
 	"头文件增加 #ifndef #def #endif指令
 	map <F1> :call Add_Include()<cr>
 	map <F3> :call Gotodef()<cr>
+	"常用替换
+	map <F10> :call Substitute_tpl()<CR>
 	map <F12> :echo g:Fkeys_msg<CR>
 else
 	map <F12> :echo "尚未绑定按键"<CR>
 endif
-ftplugin/c/add_include.vim	[[[1
-12
-
-function Add_Include()
-let file_content=["EXEC SQL IFNDEF ".toupper(expand("%:r"))."_H;","EXEC SQL DEFINE ".toupper(expand("%:r"))."_H;"]
-let file_content+=getline(1,line('$'))
-let file_content+=["EXEC SQL ENDIF;"]
-let i=1
-for line in file_content
-call setline(i,line)
-let i=i+1
-endfor
-endfunction
-
