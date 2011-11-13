@@ -319,7 +319,7 @@ ln ln_multiply(ln i,ln j,res_type restype)
 		return  k;
 	else
 	{
-		i=ln_copy(i,k);
+		ln_copy(i,k);
 		ln_free(&k);
 		return i;
 	}
@@ -428,8 +428,6 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 
 	//去除前置0
 	ln_stripleadingzero(a);
-	//去除后置0
-	ln_adjustpower(a,ln_endingzeronum(a));
 
 	//没指定商的精度 那就使用默认精度
 	if(precision<0)
@@ -474,7 +472,6 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		inc_prec+=DIGIT_NUM;
 		if(inc_prec>precision) //已经达到需要的精度
 		{
-			PUT_LINE;
 			c->lsd=z;
 			//确定指数
 			c->power=-inc_prec;
@@ -488,10 +485,11 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 			if(carry==0) //除得尽
 			{
 				c->lsd=z;
+				//确定指数
+				c->power=-inc_prec;
 				break;
 			}
 			res=0;
-			c->power-=DIGIT_NUM;
 		}
 		else
 		{
@@ -515,10 +513,10 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 	ln_fix(c,precision,mode);
 	return c;
 }
-#ifdef dsa
 
 /*
  * 作用:把ln相除
+ * 副作用:使用ln_stripleadingzero()把a,b整数部分前置0去掉
  * 参数:
  * 	a:除数
  * 	b:被除数
@@ -529,15 +527,16 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
  * 	成功:返回相加结果
  * 	失败:NULL
  */
-ln ln_divide(ln a,ln b)//,int precision,Divide_mode mode),res_type restype)
+ln ln_divide(ln a,ln b,int precision)//,Divide_mode mode),res_type restype)
 {
+	ln c;
 	ln x,y,z;
 	int zero;
-	int a_digitnum;
-	int b_digitnum;
+	int x_cellnum;
+	int y_cellnum;
 	int flag=0;
-	cell x,y,z;
-	int o;
+	int inc_prec=0; //累积精度
+	cell i,j,k;
 
 	//验证参数
 	if(ln_checknull(a)!=0)
@@ -550,102 +549,139 @@ ln ln_divide(ln a,ln b)//,int precision,Divide_mode mode),res_type restype)
 		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;	
 	}
+	
+	//去除前置0
+	ln_stripleadingzero(a);
+	ln_stripleadingzero(b);
 
 	//复制ln
-	x=ln_copy(x,a);
-	
+	x=ln_copy(NULL,a);
+	if(x==NULL)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_copy fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;	
+	}
+	y=ln_copy(NULL,b);
+	if(y==NULL)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_copy fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;	
+	}
+	//分配结果空间
+	z=ln_init(0);
+	if(z==NULL)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_init fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;	
+	}
 
-
-	y=ln_copy(y,b);
-	c=init_ln(0);
-
-	if(a->sign==b->sign)
-		c->sign=1;
+	//确定符号
+	if(x->sign==y->sign)
+		z->sign=1;
 	else
-		c->sign=-1;
-	a_digitnum=ln_nodenum(a);
-	b_digitnum=ln_nodenum(b);
-	if(a_digitnum<b_digitnum)
+		z->sign=-1;
+
+	//把x,y整数部分节点数调整一致
+	x_cellnum=ln_cellnum(x);
+	if(x_cellnum==-1)
 	{
-		zero=a->power-(b_digitnum-a_digitnum)*DIGIT_NUM;
-		ln_setzero(a,zero);
+		fprintf(stderr,"[%s %d] %s error,reason: ln_cellnum fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;	
 	}
-	else if(a_digitnum>b_digitnum)
+	y_cellnum=ln_cellnum(y);
+	if(y_cellnum==-1)
 	{
-		zero=b->power-(a_digitnum-b_digitnum)*DIGIT_NUM;
-		ln_setzero(b,zero);
+		fprintf(stderr,"[%s %d] %s error,reason: ln_cellnum fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;	
 	}
-	zero=a->power-b->power;
+	
+	if(x_cellnum<y_cellnum)
+		ln_adjustpower(x,(y_cellnum-x_cellnum)*DIGIT_NUM);
+	if(y_cellnum<x_cellnum)
+		ln_adjustpower(y,(x_cellnum-y_cellnum)*DIGIT_NUM);
+	
+	x->sign=1;
+	x->power=0;
+	y->power=0;
+	z->power=0;
+	i=x->msd;
+	j=y->msd;
+	k=z->msd;
+	//算出初始精度
+	inc_prec=ln_pointnum(x,x->lsd)-DIGIT_NUM;
 
-	a->sign=1;
-	a->power=0;
-	b->power=0;
-	c->power=0;
-
-	x=a->msd;
-	y=b->msd;
-	z=c->msd;
-
-	for(o=1;o<4;o++)
+	while(1)
 	{
-
-		if(x!=a->msd) 
-			z->num=(x->num+x->hcell->num*UNIT)/y->num; //求出z位数
+		if(i!=x->msd) 
+			k->num=(i->num+i->hcell->num*UNIT)/j->num; //求出z位数
 		else
-			z->num=x->num/y->num; //求出z位数
-		if(z->num !=0)
+			k->num=i->num/j->num; //求出z位数
+		if(k->num !=0)
 		{
-			b->sign=-1; //b变成负数
-			q=ln_multiply_num(b,z->num,newln);
-			ln_add(a,q,firstln);
-			ln_free(q);
-			while(a->sign==1) //少减了，再减去
+			y->sign=-1; //y变成负数
+			c=ln_multiply_int(y,k->num,newln);
+			ln_add(x,c,firstln);
+			ln_free(&c);
+			while(x->sign==1) //少减了，再减去
 			{
-				b->sign=-1;
-				ln_add(a,b,firstln);
-				z->num++;
+				y->sign=-1;
+				ln_add(x,y,firstln);
+				k->num++;
 			}
-			while(a->sign==-1) //多减了，补上
+			while(x->sign==-1) //多减了，补上
 			{
-				b->sign=1;
-				ln_add(a,b,firstln);
-				z->num--;
+				y->sign=1;
+				ln_add(x,y,firstln);
+				k->num--;
 			}
 		}
 
-		c->lsd=z;
-		if(flag==1)
-			zero-=DIGIT_NUM;
-		flag=1;
-		if(ln_cmp_num(a,0)==0)
+		//开始计算当前精度
+		inc_prec+=DIGIT_NUM;
+		if(inc_prec>precision) //已经达到需要的精度
+		{
+			z->lsd=k;
+			//确定指数
+			z->power=-inc_prec;
 			break;
-
-		if(a->msd==a->lsd->lcell)
-		{
-			ln_addsize(a,INIT_SIZE);
-			puts("aaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 		}
-		if(a->msd->num==0)
-			a->msd=a->msd->lcell;
-		a->lsd=a->lsd->lcell;
-		a->lsd->num=0;
-		x=x->lcell;
+		
 
-		puts(ln2str(a));
+		if(ln_cmp_int(x,0)==0) //除得尽
+		{
+			z->lsd=k;
+			//确定指数
+			z->power=-inc_prec;
+			break;
+		}
 
-		if(c->lsd->lcell==c->msd)
-			ln_addsize(c,INIT_SIZE);
-		z=z->lcell;
-
+		//去掉前置0
+		if(x->msd->num==0 && x->msd !=x->lsd)
+			x->msd=x->msd->lcell;
+		if(x->lsd->lcell !=x->msd) //有多余节点
+			x->lsd=x->lsd->lcell;
+		else	//增加节点
+		{
+			if(ln_addcell(x,INIT_SIZE) ==NULL)
+			{
+				fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
+				return NULL;
+			}
+			x->lsd=x->msd->hcell;
+		}
+		i=i->lcell;
 	}
-	while(c->msd!=c->lsd && c->msd->num==0)
-		c->msd=c->msd->lcell;
-	c->power=zero;
-	ln_free(a);
-	ln_free(b);
-	return c;
+
+	//去除前置0
+	ln_stripleadingzero(z);
+	ln_output(z);
+
+	ln_free(&x);
+	ln_free(&y);
+	return z;
 }
 
+#ifdef dsa
 
 
 ln ln_exp_int(ln i,int b,res_type restype)

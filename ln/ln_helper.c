@@ -385,7 +385,7 @@ int ln_digitnum(ln n)
 
 
 /*
- * 参数要求:n必须去掉前置0和后置0,否则会出错
+ * 参数要求:n必须去掉前置0
  * 作用:获取节点的小数点位数,如果是在小数点前面,则取负值
  * 参数:
  *	n:要计算的ln
@@ -413,12 +413,6 @@ int ln_pointnum(ln n,cell q)
 			return -1;	
 		}
 	}
-	if(n->lsd->num%10==0) //后置0没有去掉,报错
-	{
-		fprintf(stderr,"[%s %d] %s error,reason: n format error,n has ending zeros\n",__FILE__,__LINE__,__FUNCTION__);
-		return -1;	
-	}
-
 	pointnum=-n->power;
 	p=n->lsd;
 	while(p!=q)

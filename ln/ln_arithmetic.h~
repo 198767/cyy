@@ -71,4 +71,21 @@ ln ln_multiply(ln i,ln j,res_type restype);
  * 	失败:NULL
  */
 ln ln_multiply_int(ln a,int b,res_type restype);
+
+/*
+ * 作用:把ln a除以int b
+ * 副作用:调用ln_stripleadingzero()消除a前置0并且用ln_adjustpower()调整a的指数
+ * 副作用:调用ln_stripleadingzero()消除结果的前置0
+ * 参数:
+ * 	a:除数
+ * 	b:被除数
+ *	precision:所需精度(保留的小数位数)
+ *	mode:指定截断或者四舍五入
+ *	restype:结果存放方式
+ * 返回值:
+ * 	成功:返回相加结果
+ * 	失败:NULL
+ */
+ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype);
+
 #endif

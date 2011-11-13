@@ -5,12 +5,9 @@
 int main(int argc, char** argv)
 {
 
-	ln a=ln_init_str("2");
-	ln_info(a);
-			//	2147483647
-		ln_divide_int(a,200000,200,round_res,firstln);
-	puts(ln2str(a));
-	//todo  那个除法
+	ln a=ln_init_str("99999.999933333");
+	ln c=ln_divide_int(a,3,5,round_res,newln);
+	puts(ln2str(c));
 
 	return 0;
 }

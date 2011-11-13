@@ -255,7 +255,10 @@ ln ln_setval(ln n,int new_value)
 	}
 	
 	if(flag==1)
+	{
 		n->lsd->num++;
+		n->sign=-1;
+	}
 	return n;
 }
 
@@ -415,7 +418,6 @@ int ln_pointnum(ln n,cell q)
 		fprintf(stderr,"[%s %d] %s error,reason: n format error,n has ending zeros\n",__FILE__,__LINE__,__FUNCTION__);
 		return -1;	
 	}
-
 	pointnum=-n->power;
 	p=n->lsd;
 	while(p!=q)
