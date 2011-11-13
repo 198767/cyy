@@ -390,6 +390,7 @@ ln ln_multiply_int(ln a,int b,res_type restype)
  */
 ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 {
+	//TODO:如果a或者b=MIN_INT 这边会溢出要转换成ln除法
 	int res=0;
 	int carry=0;
 	int inc_prec=0; //累积精度
@@ -415,6 +416,15 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		fprintf(stderr,"[%s %d] %s error,reason: b=0\n",__FILE__,__LINE__,__FUNCTION__);
 		return NULL;
 	}
+
+	//除数必须在-200000-200000之间否则下面计算有可能溢出
+	//这个范围是根据INT_MAX/UNIT即2147483647/10000得出
+	if(b>200000 || b<-200000)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: b=0\n",__FILE__,__LINE__,__FUNCTION__);
+		return NULL;
+	}
+	
 
 	//去除前置0
 	ln_stripleadingzero(a);
@@ -444,12 +454,9 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 	else
 	{
 		c->sign=-a->sign;
-		//TODO:如果b=MIN_INT 这边会溢出
 		b=-b;
 	}
-
 	carry=0;
-	ln_output(a);
 	inc_prec=ln_pointnum(a,a->msd)-DIGIT_NUM;
 	x=a->msd;
 	z=c->msd;
@@ -458,19 +465,26 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 	{
 		res+=carry*UNIT;
 		z->num=res/b;
-		carry=res%b;
+		//carry=res%b;
+		carry=res-z->num*b;
+printf("res=%d carry=%d\n",res,carry);
+printf("  b=%d\n",b);
+printf("inc_prec=%d num=%d\n",inc_prec,z->num);
+
 		//开始计算当前精度
 		inc_prec+=DIGIT_NUM;
-
 		if(inc_prec>precision) //已经达到需要的精度
 		{
+			PUT_LINE;
 			c->lsd=z;
 			//确定指数
 			c->power=-inc_prec;
 			break;
 		}
 
-		if(x==a->lsd)
+		if(x==a->lsd) //必须这样标识，否则如果a和c一样，则下面会修改lsd
+			x=NULL;
+		if(x==NULL)
 		{
 			if(carry==0) //除得尽
 			{
@@ -498,8 +512,9 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		z=z->lcell;
 	}
 
-	ln_output(c);
 	//获取精度
+	puts("处理之前");
+	ln_output(c);
 	ln_fix(c,precision,mode);
 	return c;
 }

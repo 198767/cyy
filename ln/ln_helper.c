@@ -204,6 +204,7 @@ void ln_info(ln n)
  */
 ln ln_setval(ln n,int new_value)
 {
+	int flag; 
 	cell p=NULL;
 	if(!n)
 	{
@@ -213,6 +214,13 @@ ln ln_setval(ln n,int new_value)
 			fprintf(stderr,"[%s %d] %s error,reason:ln_creat fail\n",__FILE__,__LINE__,__FUNCTION__);
 			return NULL;
 		}
+	}
+
+	flag=0;
+	if(new_value==INT_MIN) //最小的int,需要特殊处理
+	{
+		new_value=INT_MAX;
+		flag=1;
 	}
 	if(new_value<0)
 	{
@@ -244,6 +252,12 @@ ln ln_setval(ln n,int new_value)
 			n->msd=p;
 			break;
 		}
+	}
+	
+	if(flag==1)
+	{
+		n->lsd->num++;
+		n->sign=-1;
 	}
 	return n;
 }
