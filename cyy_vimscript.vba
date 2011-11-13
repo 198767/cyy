@@ -33,172 +33,176 @@ endfunction
 plugin/cyy_vimscript/selector.vim	[[[1
 63
 function Show_options(waring,options)
-"显示提示信息
-let l:index=0
-let l:len=len(a:options)
-while(1)
-call Echo_options(l:index,a:waring,a:options)
-let c = getchar()
-if(c=="\<Up>")
-if(l:index>0)
-let l:index=(l:index-1)
-endif
-elseif(c=="\<Down>")
-if(l:index<l:len-1)
-let l:index=(l:index+1)
-endif
-elseif(c==27)
-let l:index=-1
-break
-elseif(c==13)
-break
-endif
-redraw!
-endwhile
-redraw!
-return l:index
+	"显示提示信息
+	let l:index=0
+	let l:len=len(a:options)
+	while(1)
+		call Echo_options(l:index,a:waring,a:options)
+		let c = getchar()
+		if(c=="\<Up>")
+			if(l:index>0)
+				let l:index=(l:index-1)
+			endif
+		elseif(c=="\<Down>")
+			if(l:index<l:len-1)
+				let l:index=(l:index+1)
+			endif
+		elseif(c==27)
+			let l:index=-1
+			break
+		elseif(c==13)
+			break
+		endif
+		redraw!
+	endwhile
+	redraw!
+	return l:index
 endfunction
 
 function Echo_options(index,waring,options)
-if(a:waring!="")
-echohl WarningMsg | echo a:waring | echohl None
-endif
-let l:maxnum=10 " 最多显示选项数
-let l:len=len(a:options)-1
-if(a:index < l:maxnum)
-let l:start_index=0
-let l:end_index=l:len
-if l:end_index>l:maxnum-1
-let l:end_index=l:maxnum-1
-endif
-else
-let l:start_index=a:index-l:maxnum+1
-let l:end_index=a:index
-endif
-for l:i in range(l:start_index,l:end_index)
-if(l:i == a:index)
-echohl Pmenu
-else
-echohl PmenuSel
-endif
-if(type(a:options[l:i]) ==type({})) "字典
-for a:key in keys(a:options[l:i])
-echo a:key." : ".a:options[l:i][a:key]
-endfor
-else
-echo a:options[l:i]
-endif
-echohl None
-endfor
-if(l:end_index < l:len)
-echohl WarningMsg | echo '-- More --' | echohl None
-endif
-echohl WarningMsg | echo '<Up> 上 <Down> 下 <Enter> 选中 <Esc> 取消' | echohl None
+	if(a:waring!="")
+		echohl WarningMsg | echo a:waring | echohl None
+	endif
+	let l:maxnum=10 " 最多显示选项数
+	let l:len=len(a:options)-1
+	if(a:index < l:maxnum)
+		let l:start_index=0
+		let l:end_index=l:len
+		if l:end_index>l:maxnum-1
+			let l:end_index=l:maxnum-1
+		endif
+	else
+		let l:start_index=a:index-l:maxnum+1
+		let l:end_index=a:index
+	endif
+	for l:i in range(l:start_index,l:end_index)
+		if(l:i == a:index)
+			echohl Pmenu
+		else
+			echohl PmenuSel
+		endif
+		if(type(a:options[l:i]) ==type({})) "字典
+			for a:key in keys(a:options[l:i])
+				echo a:key." : ".a:options[l:i][a:key]
+			endfor
+		else
+			echo a:options[l:i]
+		endif
+		echohl None
+	endfor
+	if(l:end_index < l:len)
+		echohl WarningMsg | echo '-- More --' | echohl None
+	endif
+	echohl WarningMsg | echo '<Up> 上 <Down> 下 <Enter> 选中 <Esc> 取消' | echohl None
 endfunction
 plugin/cyy_vimscript/gotodef.vim	[[[1
-100
+104
 "新窗口打开变量或函数定义
 "具体用法
 " 1.如果当前行是include语句则调用Gotodef可以打开对应头文件
 " 2.如果光标在宏函数上 则调用Gotodef可以打开对应宏定义
 " 3.如果光标在函数名上 则调用Gotodef可以打开对应函数定义
- function Gettoken() "获取当前光标所在的符号 可以是变量名 函数名 或者是文件名
- let curline=getline('.') "当前行
-let token_list=matchlist(curline,'^\s*EXEC\s\+SQL\s\+INCLUDE\s\+"\([^"]\+\)"\s*;\s*$\c') "EXEC INCLUDE指令
-if(len(token_list)==0)
-let token_list=matchlist(curline,'^\s*#include\s\+"\([^"]\+\)"\s*$') "INCLUDE宏
-endif
-if(len(token_list)!=0)
-return [token_list[1],"head_file"]
-endif
 
-let validletter="[a-zA-Z0-9_]" "token合法字符
-let i=col('.') "当前列
-let j=i
-if match(curline[i-1],validletter)==-1
-return []
-endif
-while match(curline[i-1],validletter)!=-1
-let i=i-1
-endwhile
-
-while match(curline[j-1],validletter)!=-1
-let j=j+1
-endwhile
-let j=j-1
-let token=strpart(curline,i,j-i)
-if match(strpart(curline,j),'^\s*(')!=-1 "token是函数名
-return [token,"function"]
-elseif match(strpart(curline,j),'^\s*\.')!=-1 "token是结构体
-return [token,"struct"]
-endif
-return [token,"unknown"]
+"函数定义搜索目录
+let s:func_dir=['.']
+function Gettoken() "获取当前光标所在的符号 可以是变量名 函数名 或者是文件名
+	let curline=getline('.') "当前行
+	let token_list=matchlist(curline,'^\s*EXEC\s\+SQL\s\+INCLUDE\s\+"\([^"]\+\)"\s*;\s*$\c') "EXEC INCLUDE指令
+	if(len(token_list)==0)
+		let token_list=matchlist(curline,'^\s*#include\s\+"\([^"]\+\)"\s*$') "INCLUDE宏
+	endif
+	if(len(token_list)!=0)
+		return [token_list[1],"head_file"]
+	endif
+	
+	let validletter="[a-zA-Z0-9_]" "token合法字符
+	let i=col('.') "当前列
+	let j=i
+	if match(curline[i-1],validletter)==-1
+		return []
+	endif
+	while match(curline[i-1],validletter)!=-1
+		let i=i-1
+	endwhile
+	
+	while match(curline[j-1],validletter)!=-1
+		let j=j+1
+	endwhile
+	let j=j-1
+	let token=strpart(curline,i,j-i)
+	if match(strpart(curline,j),'^\s*(')!=-1 "token是函数名
+		return [token,"function"]
+	elseif match(strpart(curline,j),'^\s*\.')!=-1 "token是结构体
+		return [token,"struct"]
+	endif
+	return [token,"unknown"]
 endfunction
 function Gotodef() "打开当前光标所在的符号的定义
-let token_type=Gettoken()
-if(token_type==[])
-echo "非法符号"
-return
-endif
-let token=token_type[0]
-let type=token_type[1]
-if(type=="head_file")
-let filepath=findfile(token,"/home/public/incl")
-if(filepath=="")
-let filepath=findfile(token,"/usr/include")
-endif
-if(filepath !="")
-exec "sp ".filepath
-else
-echo "找不到头文件".token
-endif
-elseif(type=="function")
-let command=['grep ''^[^(]\+\<'.token.'\s*('' ', ' -n | grep -v ":\s*\*" | grep -v ":\s*\/" | grep -v ";\s*$" | grep -v "=" | grep -v ":\s*'.token.'"']
-let res=system(command[0].expand("%").command[1]) " 先搜本文件
-if(res !="")
-let line=split(res,"\n")
-let linenum=split(line[0],":")
-exec "sp "
-exec linenum[0]
-else
-if(res=="")
-let res=system(command[0].' -R /home/public/cgisrc/pub/ --include="*.ec" '.command[1]) " 再搜pub下.ec文件
-endif
-if(res=="")
-let res=system(command[0].' -R /home/public/cgisrc/pub/ --include="*.c" '.command[1]) " 再搜pub下.c文件
-endif
-if(res=="")
-let res=system('grep "^\s*#define\s*'.token.'\s*(" -R /home/public/incl/ -n --include="*.h"') "再搜宏定义
-endif
-if(res !="")
-let line=split(res,"\n")
-let file=split(line[0],":")
-exec "sp ".file[0]
-exec file[1]
-else
-echo "找不到函数定义"
-endif
-endif
-elseif(type=="struct")
-if filereadable("/home/public/incl/".token.".h")
-exec "sp /home/public/incl/".token.".h"
-else
-echo "找不到结构体定义"
-endif
-elseif(type=="unknown")
-if filereadable("/home/public/incl/".token.".h")
-exec "sp /home/public/incl/".token.".h"
-else
-echo "未知符号".token
-endif
-endif
+	let token_type=Gettoken()
+	if(token_type==[])
+		echo "非法符号"
+		return
+	endif
+	let token=token_type[0]
+	let type=token_type[1]
+	if(type=="head_file")
+		let filepath=findfile(token,"/home/public/incl")
+		if(filepath=="")
+			let filepath=findfile(token,"/usr/include")
+		endif
+		if(filepath !="")
+			exec "sp ".filepath
+		else
+			echo "找不到头文件".token
+		endif
+	elseif(type=="function")
+		let command=['grep ''^[^(]\+\<'.token.'\s*('' ', ' -n | grep -v ":\s*\*" | grep -v ":\s*\/" | grep -v ";\s*$" | grep -v "=" | grep -v ":\s*'.token.'"']
+		let res=system(command[0].expand("%").command[1]) " 先搜本文件
+		if(res !="")
+			let line=split(res,"\n")
+			let linenum=split(line[0],":")
+			exec "sp "
+			exec linenum[0]
+		else
+			for i in range(len(s:func_dir))
+				if(res=="")
+					let res=system(command[0].' -R '.s:func_dir[i].' --include="*.c" '.command[1]) " 再搜pub下.ec文件
+				else
+					break
+				endif
+			endfor
+			if(res=="")
+				let res=system('grep "^\s*#define\s*'.token.'\s*(" -R /home/public/incl/ -n --include="*.h"') "再搜宏定义
+			endif
+			if(res !="")
+				let line=split(res,"\n")
+				let file=split(line[0],":")
+				exec "sp ".file[0]
+				exec file[1]
+			else
+				echo "找不到函数定义"
+			endif
+		endif
+	elseif(type=="struct")
+		if filereadable("/home/public/incl/".token.".h")
+			exec "sp /home/public/incl/".token.".h"
+		else
+			echo "找不到结构体定义"
+		endif
+	elseif(type=="unknown")
+		if filereadable("/home/public/incl/".token.".h")
+			exec "sp /home/public/incl/".token.".h"
+		else
+			echo "未知符号".token
+		endif
+	endif
 endfunction
 
 
 
 
 plugin/cyy_vimscript/settings.vim	[[[1
-22
+23
 "备份文件
 set backup
 "使用文件类型插件
@@ -213,7 +217,8 @@ set incsearch
 set nu
 "打开文件跳转到上次阅读地方
 autocmd BufReadPost * call cursor(line("'\""),1)
-
+"检索高亮
+set hlsearch
 "映射到切换大小写
 nmap . :call Switch_case()<cr>
 
