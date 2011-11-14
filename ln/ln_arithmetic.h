@@ -1,3 +1,6 @@
+/*
+ *	该文件里面包含ln的基本运算函数
+ */
 #ifndef LN_ARITHMETIC_H
 #define LN_ARITHMETIC_H
 #include <stdlib.h>

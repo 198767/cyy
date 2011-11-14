@@ -711,10 +711,7 @@ ln ln_divide(ln a,ln b,int precision,divide_mode mode,res_type restype)
 	}
 	return z;
 }
-
 #ifdef dsa
-
-
 ln ln_exp_int(ln i,int b,res_type restype)
 {
 

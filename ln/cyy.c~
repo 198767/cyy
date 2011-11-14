@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 	ln_output(a);
 	ln_output(b);
 	//ln a=ln_init_str("919191919190");
-	ln c=ln_divide(a,b,100,trunc_res,newln);
+	ln c=ln_divide(a,b,1000,trunc_res,newln);
 	puts(ln2str(c));
 
 	return 0;

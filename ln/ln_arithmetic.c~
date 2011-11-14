@@ -692,7 +692,7 @@ ln ln_divide(ln a,ln b,int precision,divide_mode mode,res_type restype)
 				return NULL;
 			}
 		}
-		x->lsd=z->msd->hcell;
+		z->lsd=z->msd->hcell;
 		k=k->lcell;
 	}
 
@@ -713,8 +713,6 @@ ln ln_divide(ln a,ln b,int precision,divide_mode mode,res_type restype)
 }
 
 #ifdef dsa
-
-
 ln ln_exp_int(ln i,int b,res_type restype)
 {
 

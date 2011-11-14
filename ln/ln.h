@@ -3,11 +3,8 @@
 
 #define INIT_SIZE 5 //初始分配的节点个数
 #define UNIT 10000  //该表示法的进制
-#define DIV_PREC 100  //除法有效数字个数
+#define DIV_PREC 100  //除法默认小数精度
 #define DIGIT_NUM 4 //每个节点存放的位数
-#define MAX(a,b)  (a>b?a:b) //求最大值
-#define MIN(a,b)  (a<b?a:b) //求最小值
-#define ISDIGIT(a)  ((a)>='0'&&(a)<='9') //字符是否数字
 #define PUT_LINE {printf("[%s %d %s]\n",__FILE__,__LINE__,__FUNCTION__);fflush(stdout);}
 
 //符号用sign表示 表示成 (sign)cell*10^power 

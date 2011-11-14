@@ -1,3 +1,6 @@
+/*
+ *	该库里面包含ln的构造及释放的函数，以及转换函数等辅助函数
+ */
 #ifndef LN_HELPER_H
 #define LN_HELPER_H
 
