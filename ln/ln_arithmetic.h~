@@ -88,4 +88,5 @@ ln ln_multiply_int(ln a,int b,res_type restype);
  */
 ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype);
 
+ln ln_divide(ln a,ln b,int precision);
 #endif

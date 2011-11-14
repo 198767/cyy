@@ -394,7 +394,7 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 	int res=0;
 	int carry=0;
 	int inc_prec=0; //累积精度
-	ln c;
+	ln c,d;
 	cell x,z;
 
 	//验证参数
@@ -417,12 +417,23 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
 		return NULL;
 	}
 
-	//除数必须在-200000-200000之间否则下面计算有可能溢出
+	//除数必须在-200000-200000之间否则下面计算有可能溢出,因此必须把b转化成ln再操作
 	//这个范围是根据INT_MAX/UNIT即2147483647/10000得出
 	if(b>200000 || b<-200000)
 	{
-		fprintf(stderr,"[%s %d] %s error,reason: b=0\n",__FILE__,__LINE__,__FUNCTION__);
-		return NULL;
+		d=ln_init(b);
+		if(d==NULL)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: ln_init fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
+		}
+		c=ln_divide(a,d,precision,mode,restype);
+		if(c==NULL)
+		{
+			fprintf(stderr,"[%s %d] %s error,reason: ln_divide fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;
+		}
+		return c;
 	}
 	
 
@@ -527,14 +538,12 @@ ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype)
  * 	成功:返回相加结果
  * 	失败:NULL
  */
-ln ln_divide(ln a,ln b,int precision)//,Divide_mode mode),res_type restype)
+ln ln_divide(ln a,ln b,int precision,divide_mode mode,res_type restype)
 {
 	ln c;
 	ln x,y,z;
-	int zero;
 	int x_cellnum;
 	int y_cellnum;
-	int flag=0;
 	int inc_prec=0; //累积精度
 	cell i,j,k;
 
@@ -596,10 +605,13 @@ ln ln_divide(ln a,ln b,int precision)//,Divide_mode mode),res_type restype)
 	}
 	
 	if(x_cellnum<y_cellnum)
-		ln_adjustpower(x,(y_cellnum-x_cellnum)*DIGIT_NUM);
+		ln_adjustpower(x,(x_cellnum-y_cellnum)*DIGIT_NUM);
 	if(y_cellnum<x_cellnum)
-		ln_adjustpower(y,(x_cellnum-y_cellnum)*DIGIT_NUM);
+		ln_adjustpower(y,(y_cellnum-x_cellnum)*DIGIT_NUM);
 	
+	//算出初始精度
+	inc_prec=ln_pointnum(x,x->lsd)-DIGIT_NUM+y->power;
+
 	x->sign=1;
 	x->power=0;
 	y->power=0;
@@ -607,8 +619,6 @@ ln ln_divide(ln a,ln b,int precision)//,Divide_mode mode),res_type restype)
 	i=x->msd;
 	j=y->msd;
 	k=z->msd;
-	//算出初始精度
-	inc_prec=ln_pointnum(x,x->lsd)-DIGIT_NUM;
 
 	while(1)
 	{
@@ -616,6 +626,7 @@ ln ln_divide(ln a,ln b,int precision)//,Divide_mode mode),res_type restype)
 			k->num=(i->num+i->hcell->num*UNIT)/j->num; //求出z位数
 		else
 			k->num=i->num/j->num; //求出z位数
+		printf("addr=%d num=%d\n",(int)k,k->num);
 		if(k->num !=0)
 		{
 			y->sign=-1; //y变成负数
@@ -658,26 +669,46 @@ ln ln_divide(ln a,ln b,int precision)//,Divide_mode mode),res_type restype)
 		//去掉前置0
 		if(x->msd->num==0 && x->msd !=x->lsd)
 			x->msd=x->msd->lcell;
-		if(x->lsd->lcell !=x->msd) //有多余节点
-			x->lsd=x->lsd->lcell;
-		else	//增加节点
+
+		//增加节点
+		if(x->lsd->lcell ==x->msd)
 		{
 			if(ln_addcell(x,INIT_SIZE) ==NULL)
 			{
 				fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
 				return NULL;
 			}
-			x->lsd=x->msd->hxell;
 		}
+		x->lsd=x->lsd->lcell;
+		x->lsd->num=0;
 		i=i->lcell;
+
+		//增加节点
+		if(k==z->lsd)
+		{
+			if(ln_addcell(z,INIT_SIZE) ==NULL)
+			{
+				fprintf(stderr,"[%s %d] %s error,reason: ln_addcell fail\n",__FILE__,__LINE__,__FUNCTION__);
+				return NULL;
+			}
+		}
+		x->lsd=z->msd->hcell;
+		k=k->lcell;
 	}
 
-	//去除前置0
-	ln_stripleadingzero(z);
-	ln_output(z);
-
+	//释放临时ln
 	ln_free(&x);
 	ln_free(&y);
+	//去除前置0
+	ln_stripleadingzero(z);
+	//获取精度
+	ln_fix(z,precision,mode);
+	//复制给a
+	if(restype==firstln)
+	{
+		ln_copy(a,z);
+		ln_free(&z);
+	}
 	return z;
 }
 

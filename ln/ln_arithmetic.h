@@ -88,5 +88,18 @@ ln ln_multiply_int(ln a,int b,res_type restype);
  */
 ln ln_divide_int(ln a,int b,int precision,divide_mode mode,res_type restype);
 
-ln ln_divide(ln a,ln b,int precision);
+/*
+ * 作用:把ln相除
+ * 副作用:使用ln_stripleadingzero()把a,b整数部分前置0去掉
+ * 参数:
+ * 	a:除数
+ * 	b:被除数
+ *	precision:所需精度(保留的小数位数)
+ *	mode:指定截断或者四舍五入
+ *	restype:结果存放方式
+ * 返回值:
+ * 	成功:返回相加结果
+ * 	失败:NULL
+ */
+ln ln_divide(ln a,ln b,int precision,divide_mode mode,res_type restype);
 #endif
