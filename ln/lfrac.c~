@@ -1,68 +1,85 @@
 /*
  *	该库里面包含ln的构造及释放的函数，以及转换函数等辅助函数
  */
-#include "ln_helper.h"
+#include "lfrac.h"
 
 /*
- * 作用:创建ln,初始节点值为0
+ * 作用:ntor和dtor作为分子和分母创建lfrac
  * 参数:
- * 	cellnum:ln的初始节点数
+ * 	ntor:分子
+ * 	dtor:分母
+ * 	res_type:深复制或者浅复制参数
  * 返回值:
- * 	成功:ln
+ * 	成功:lfrac
  * 	失败:NULL
  */
-ln ln_creat(int cellnum)
+lfrac lfrac_creat(ln ntor,ln dtor,res_type restype)
 {
-	int i;
-	cell p;
+	lfrac n;
+	//检查参数
+	if(ln_checknull(ntor)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return;	
+	}
+	if(ln_checknull(dtor)!=0)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: ln_checknull fail\n",__FILE__,__LINE__,__FUNCTION__);
+		return;	
+	}
+	if(restype !=copy && restype !=deepcopy)
+	{
+		fprintf(stderr,"[%s %d] %s error,reason: invalid restype\n",__FILE__,__LINE__,__FUNCTION__);
+		return;	
+	}
 
-	ln n=(ln)malloc(sizeof(struct _ln));
+	//去除前置0
+	ln_stripleadingzero(ntor);
+	ln_stripleadingzero(dtor);
+
+	//分配空间
+	n=(lfrac)malloc(sizeof(struct _lfrac));
 	if(!n)
 	{
 		fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
 		return NULL;			
 	}
-
-	n->lsd=NULL;
-	n->msd=NULL;
-	n->power=0;
-	n->sign=1;
-
-	for(i=0;i<cellnum;i++)
+	if(restype==deepcopy) //深度复制
 	{
-		p=(cell)malloc(sizeof(struct _cell));
-		if(!p)
+		n->ntor=ln_copy(n->ntor,ntor);
+		if(n->ntor==NULL)
 		{
-			fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
-			ln_free(&n);
+			fprintf(stderr,"[%s %d] %s error,reason: ln_copy fail\n",__FILE__,__LINE__,__FUNCTION__);
 			return NULL;			
 		}
-		p->num=0;
-		if(!n->lsd)
+		n->dtor=ln_copy(n->dtor,dtor);
+		if(n->dtor==NULL)
 		{
-			n->lsd=p;
-			p->hcell=p;
-			p->lcell=p;
-		}
-		else
-		{
-			p->hcell=n->lsd;
-			p->lcell=n->lsd->lcell;
-			n->lsd->lcell->hcell=p;
-			n->lsd->lcell=p;
-			n->lsd=p;
+			fprintf(stderr,"[%s %d] %s error,reason: ln_copy fail\n",__FILE__,__LINE__,__FUNCTION__);
+			return NULL;			
 		}
 	}
-	n->msd=n->lsd;
+	else
+	{	n->ntor=ntor;
+		n->dtor=dtor;
+	}
 	return n;
 }
 
 /*
  * 作用:释放ln
  * 参数:
- *	n:要释放的ln的指针
  * 返回值:
  * 	无
+ */
+
+/*
+ * 作用:释放lfrac
+ * 参数:
+ *	n:要释放的lfrac的指针
+ * 返回值:
+ * 	成功:lfrac
+ * 	失败:NULL
  */
 void ln_free(ln* n)
 {

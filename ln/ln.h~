@@ -3,7 +3,7 @@
 
 #define INIT_SIZE 5 //初始分配的节点个数
 #define UNIT 10000  //该表示法的进制
-#define DIV_PREC 100  //除法有效数字个数
+#define DIV_PREC 100  //除法默认小数精度
 #define DIGIT_NUM 4 //每个节点存放的位数
 #define PUT_LINE {printf("[%s %d %s]\n",__FILE__,__LINE__,__FUNCTION__);fflush(stdout);}
 
@@ -24,8 +24,9 @@ struct _cell //表示ln其中一个节点(一个大数位数)
 };
 //定义操作模式枚举
 typedef enum{
-	newln,
-	firstln
+	newln,	//操作结果作为新的结构返回
+	firstln, //操作结果放在第一个操作数
+	deepcopy,
 }res_type;
 typedef enum{
 	trunc_res, //截断

@@ -24,8 +24,10 @@ struct _cell //表示ln其中一个节点(一个大数位数)
 };
 //定义操作模式枚举
 typedef enum{
-	newln,
-	firstln
+	newln,	//操作结果作为新的结构返回
+	firstln, //操作结果放在第一个操作数
+	copy,	//创建分数时浅复制
+	deepcopy, //创建分数时深复制
 }res_type;
 typedef enum{
 	trunc_res, //截断

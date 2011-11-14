@@ -13,10 +13,12 @@
  */
 ln ln_creat(int cellnum)
 {
+	ln n;
 	int i;
 	cell p;
 
-	ln n=(ln)malloc(sizeof(struct _ln));
+	//分配空间
+	n=(ln)malloc(sizeof(struct _ln));
 	if(!n)
 	{
 		fprintf(stderr,"[%s %d] %s malloc error,reason: %s\n",__FILE__,__LINE__,__FUNCTION__,strerror(errno));
